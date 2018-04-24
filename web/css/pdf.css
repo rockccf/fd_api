@@ -1,0 +1,11 @@
+table.print-friendly thead {
+	display: table-header-group;
+}
+
+table.print-friendly tfoot {
+	display: table-row-group;
+}
+
+table.print-friendly tr {
+	page-break-inside: avoid;
+}

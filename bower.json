@@ -1,0 +1,19 @@
+{
+    "name": "hrcb-api",
+    "version": "0.0.0",
+    "authors": [
+        "@dbix"
+    ],
+    "description": "",
+    "main": "",
+    "license": "MIT",
+    "homepage": "",
+    "ignore": [
+        "**/.*",
+        "node_modules",
+        "bower_components",
+        "vendor/bower",
+        "test",
+        "tests"
+    ]
+}
