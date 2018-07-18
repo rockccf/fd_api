@@ -65,7 +65,7 @@ $config = [
                 'streamOptions' => [
                     'ssl' => [
                         'allow_self_signed' => true,
-                        'verify_peer' => false,
+                        'verify_per' => false,
                         'verify_peer_name' => false,
                     ],
                 ],
@@ -143,22 +143,8 @@ $config = [
                         'OPTIONS login' => 'options',
                         'PUT change-password' => 'change-password',
                         'OPTIONS change-password' => 'options',
-						'PUT toggle-active' => 'toggle-active',
-                        'OPTIONS toggle-active' => 'options',
 						'GET is-username-exists-again' => 'is-username-exists-again',
                         'OPTIONS is-username-exists-again' => 'options',
-                        'GET is-email-exists-again' => 'is-email-exists-again',
-                        'OPTIONS is-email-exists-again' => 'options',
-                        'GET is-user-email-exists' => 'is-user-email-exists',
-                        'OPTIONS is-user-email-exists' => 'options',
-						'GET identity-refresh' => 'identity-refresh',
-                        'OPTIONS identity-refresh' => 'options',
-                        'POST request-reset-password' => 'request-reset-password',
-                        'OPTIONS request-reset-password' => 'options',                        
-                        'GET verify-reset-password-token' => 'verify-reset-password-token',
-                        'OPTIONS reset-password-token' => 'options',
-                        'POST reset-password' => 'reset-password',
-                        'OPTIONS reset-password' => 'options',
                     ],
                 ],
                 [
@@ -168,6 +154,16 @@ $config = [
                     'extraPatterns' => [
                         'OPTIONS update' => 'options'
                     ]
+                ],
+                [
+                    'class' => 'yii\rest\UrlRule',
+                    'controller' => 'master',
+                    'pluralize' => URL_PLURALIZE,
+                ],
+                [
+                    'class' => 'yii\rest\UrlRule',
+                    'controller' => 'package',
+                    'pluralize' => URL_PLURALIZE,
                 ],
             ],
         ],

@@ -2,7 +2,7 @@
 
 /* @var $this yii\web\View */
 
-$this->title = 'HorecaBid API';
+$this->title = 'FourD API';
 ?>
 <div class="site-index">
 

@@ -20,7 +20,6 @@
         "yiisoft/yii2-swiftmailer": "^2.0",
         "firebase/php-jwt": "^4.0",
         "mikehaertl/phpwkhtmltopdf": "^2.2",
-        "phpoffice/phpexcel": "^1.8",
         "omnilight/yii2-scheduling": "*",
         "phpoffice/phpspreadsheet": "^1.1",
         "fabpot/goutte": "^3.2"
