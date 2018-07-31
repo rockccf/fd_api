@@ -94,6 +94,14 @@ class RbacController extends Controller
         $viewPackage->description = 'View Package';
         $auth->add($viewPackage);
 
+        $createPackage = $auth->createPermission('CREATE_COMPANY_DRAW');
+        $createPackage->description = 'Create Company Draw';
+        $auth->add($createPackage);
+
+        $deletePackage = $auth->createPermission('DELETE_COMPANY_DRAW');
+        $deletePackage->description = 'Delete Company Draw';
+        $auth->add($deletePackage);
+
         $bet = $auth->createPermission('BET');
         $bet->description = 'Bet';
         $auth->add($bet);

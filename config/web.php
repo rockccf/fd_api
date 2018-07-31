@@ -130,7 +130,7 @@ $config = [
             'class' => 'yii\mutex\MysqlMutex',
         ],
         'urlManager' => [
-            'enablePrettyUrl' => true,
+            'enablePrettyUrl' => false,
             'enableStrictParsing' => false,
             'showScriptName' => false,
             'rules' => [
@@ -162,7 +162,26 @@ $config = [
                 ],
                 [
                     'class' => 'yii\rest\UrlRule',
+                    'controller' => 'company',
+                    'pluralize' => URL_PLURALIZE,
+                ],
+                [
+                    'class' => 'yii\rest\UrlRule',
+                    'controller' => 'company-draw',
+                    'pluralize' => URL_PLURALIZE,
+                    'extraPatterns' => [
+                        'DELETE bulk-delete' => 'bulk-delete',
+                        'OPTIONS bulk-delete' => 'options'
+                    ]
+                ],
+                [
+                    'class' => 'yii\rest\UrlRule',
                     'controller' => 'package',
+                    'pluralize' => URL_PLURALIZE,
+                ],
+                [
+                    'class' => 'yii\rest\UrlRule',
+                    'controller' => 'bet',
                     'pluralize' => URL_PLURALIZE,
                 ],
             ],

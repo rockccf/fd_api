@@ -17,6 +17,8 @@ use yii\db\Expression;
  * @property string $code
  * @property string $drawTime
  * @property string $stopBetTime
+ * @property string $bgColor
+ * @property string $fontColor
  * @property int $createdBy
  * @property string $createdAt
  * @property int $updatedBy
@@ -41,10 +43,11 @@ class Company extends \yii\db\ActiveRecord
     {
         return [
             [['version'], 'integer'],
-            [['name', 'code', 'drawTime', 'stopBetTime'], 'required'],
-            [['drawTime', 'stopBetTime'], 'safe'],
+            [['name', 'code', 'drawTime', 'stopBetTime', 'bgColor', 'fontColor'], 'required'],
+            [['drawTime', 'stopBetTime', 'bgColor', 'fontColor'], 'safe'],
             [['name'], 'string', 'max' => 50],
             [['code'], 'string', 'max' => 1],
+            [['bgColor', 'fontColor'], 'string', 'max' => 20],
             [['code'], 'unique']
         ];
     }
@@ -61,6 +64,8 @@ class Company extends \yii\db\ActiveRecord
             'code' => 'Code',
             'drawTime' => 'Draw Time',
             'stopBetTime' => 'Stop Bet Time',
+            'bgColor' => 'Bg Color',
+            'fontColor' => 'Font Color',
             'createdBy' => 'Created By',
             'createdAt' => 'Created At',
             'updatedBy' => 'Updated By',
@@ -87,6 +92,18 @@ class Company extends \yii\db\ActiveRecord
                 'defaultValue' => 1
             ],
         ];
+    }
+
+    //For expand usage
+    public function extraFields()
+    {
+        $extraFields = parent::extraFields();
+
+        $extraFields['companyDraws'] = function ($model) {
+            return $model->companyDraws;
+        };
+
+        return $extraFields;
     }
 
     /**

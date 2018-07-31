@@ -1,33 +1,13 @@
 <?php
 namespace app\commands;
 
-use app\models\Department;
-use app\models\Supplier;
-use app\models\Tenant;
 use app\models\User;
-use app\models\UserProfile;
 use Yii;
 use yii\console\Controller;
 use yii\console\ExitCode;
 
 class AdminController extends Controller
 {
-    public function actionCreateSupplierUser($supplierCode, $email, $firstName, $lastName, $isMaster, $jobTitle = 'Manager', $department = 'Sales',$username = null) {
-        $dbTrans = Supplier::getDb()->beginTransaction();
-        try {
-            $supplier = Supplier::findOne(['companyCode'=>$supplierCode]);
-
-
-
-            $dbTrans->commit();
-        } catch (\Throwable $e) {
-            $dbTrans->rollBack();
-            throw $e;
-        }
-
-        return ExitCode::OK;
-    }
-
     public function actionResetUserPassword($userType, $userId = null, $password = '123456') {
         if (YII_ENV_PROD) {
             echo 'Please do not execute this in a production enviroment.';

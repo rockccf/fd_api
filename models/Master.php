@@ -15,6 +15,7 @@ use yii\db\Expression;
  * @property int $version
  * @property string $prefix
  * @property string $name
+ * @property string $commissionRate
  * @property int $active
  * @property int $locked
  * @property int $voidBetMinutes
@@ -61,8 +62,8 @@ class Master extends \yii\db\ActiveRecord
     {
         return [
             [['version', 'active', 'locked', 'voidBetMinutes'], 'integer'],
-            [['prefix', 'name', 'active', 'voidBetMinutes', 'betMaxLimitBig', 'betMaxLimitSmall', 'betMaxLimit4a', 'betMaxLimit4b', 'betMaxLimit4c', 'betMaxLimit4d', 'betMaxLimit4e', 'betMaxLimit4f', 'betMaxLimit3abc', 'betMaxLimit3a', 'betMaxLimit3b', 'betMaxLimit3c', 'betMaxLimit3d', 'betMaxLimit3e', 'betMaxLimit5d', 'betMaxLimit6d'], 'required'],
-            [['betMaxLimitBig', 'betMaxLimitSmall', 'betMaxLimit4a', 'betMaxLimit4b', 'betMaxLimit4c', 'betMaxLimit4d', 'betMaxLimit4e', 'betMaxLimit4f', 'betMaxLimit3abc', 'betMaxLimit3a', 'betMaxLimit3b', 'betMaxLimit3c', 'betMaxLimit3d', 'betMaxLimit3e', 'betMaxLimit5d', 'betMaxLimit6d'], 'number'],
+            [['prefix', 'name', 'commissionRate', 'active', 'voidBetMinutes', 'betMaxLimitBig', 'betMaxLimitSmall', 'betMaxLimit4a', 'betMaxLimit4b', 'betMaxLimit4c', 'betMaxLimit4d', 'betMaxLimit4e', 'betMaxLimit4f', 'betMaxLimit3abc', 'betMaxLimit3a', 'betMaxLimit3b', 'betMaxLimit3c', 'betMaxLimit3d', 'betMaxLimit3e', 'betMaxLimit5d', 'betMaxLimit6d'], 'required'],
+            [['commissionRate', 'betMaxLimitBig', 'betMaxLimitSmall', 'betMaxLimit4a', 'betMaxLimit4b', 'betMaxLimit4c', 'betMaxLimit4d', 'betMaxLimit4e', 'betMaxLimit4f', 'betMaxLimit3abc', 'betMaxLimit3a', 'betMaxLimit3b', 'betMaxLimit3c', 'betMaxLimit3d', 'betMaxLimit3e', 'betMaxLimit5d', 'betMaxLimit6d'], 'number'],
             [['remarks'], 'string'],
             [['prefix'], 'string', 'max' => 3],
             [['name'], 'string', 'max' => 255],
@@ -80,6 +81,7 @@ class Master extends \yii\db\ActiveRecord
             'version' => 'Version',
             'prefix' => 'Prefix',
             'name' => 'Name',
+            'commissionRate' => 'Commission Rate',
             'active' => 'Active',
             'locked' => 'Locked',
             'voidBetMinutes' => 'Void Bet Minutes',
@@ -133,6 +135,10 @@ class Master extends \yii\db\ActiveRecord
     public function fields()
     {
         $fields = parent::fields();
+
+        $fields['commissionRate'] = function ($model) {
+            return floatval($model->commissionRate); //Cast string to float/double type
+        };
 
         $fields['betMaxLimitBig'] = function ($model) {
             return floatval($model->betMaxLimitBig); //Cast string to float/double type

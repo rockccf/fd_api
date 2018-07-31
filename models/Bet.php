@@ -41,13 +41,14 @@ use yii\db\Expression;
  * @property string $totalWin
  * @property string $totalCollect
  * @property string $totalSuperiorCommission
- * @property string $voidDate
+ * @property int $packageId
  * @property int $masterId
  * @property int $createdBy
  * @property string $createdAt
  * @property int $updatedBy
  * @property string $updatedAt
  *
+ * @property Package $package
  * @property Master $master
  * @property BetDetail[] $betDetails
  */
@@ -68,10 +69,10 @@ class Bet extends \yii\db\ActiveRecord
     {
         return [
             [['version', 'status', 'masterId'], 'integer'],
-            [['status', 'betMaxLimitBig', 'betMaxLimitSmall', 'betMaxLimit4a', 'betMaxLimit4b', 'betMaxLimit4c', 'betMaxLimit4d', 'betMaxLimit4e', 'betMaxLimit4f', 'betMaxLimit3abc', 'betMaxLimit3a', 'betMaxLimit3b', 'betMaxLimit3c', 'betMaxLimit3d', 'betMaxLimit3e', 'betMaxLimit5d', 'betMaxLimit6d', '4dCommRate', '6dCommRate', 'gdCommRate', 'totalSales', 'totalCommission', 'masterId'], 'required'],
+            [['status', 'betMaxLimitBig', 'betMaxLimitSmall', 'betMaxLimit4a', 'betMaxLimit4b', 'betMaxLimit4c', 'betMaxLimit4d', 'betMaxLimit4e', 'betMaxLimit4f', 'betMaxLimit3abc', 'betMaxLimit3a', 'betMaxLimit3b', 'betMaxLimit3c', 'betMaxLimit3d', 'betMaxLimit3e', 'betMaxLimit5d', 'betMaxLimit6d', '4dCommRate', '6dCommRate', 'gdCommRate', 'masterId'], 'required'],
             [['betMaxLimitBig', 'betMaxLimitSmall', 'betMaxLimit4a', 'betMaxLimit4b', 'betMaxLimit4c', 'betMaxLimit4d', 'betMaxLimit4e', 'betMaxLimit4f', 'betMaxLimit3abc', 'betMaxLimit3a', 'betMaxLimit3b', 'betMaxLimit3c', 'betMaxLimit3d', 'betMaxLimit3e', 'betMaxLimit5d', 'betMaxLimit6d', '4dCommRate', '6dCommRate', 'gdCommRate', 'extra4dCommRate', 'extra6dCommRate', 'extraGdCommRate', 'totalSales', 'totalCommission', 'totalWin', 'totalCollect', 'totalSuperiorCommission'], 'number'],
-            [['voidDate'], 'safe'],
-            [['masterId'], 'exist', 'skipOnError' => true, 'targetClass' => Master::class, 'targetAttribute' => ['masterId' => 'id']]
+            [['masterId'], 'exist', 'skipOnError' => true, 'targetClass' => Master::class, 'targetAttribute' => ['masterId' => 'id']],
+            [['packageId'], 'exist', 'skipOnError' => true, 'targetClass' => Package::class, 'targetAttribute' => ['packageId' => 'id']]
         ];
     }
 
@@ -111,8 +112,8 @@ class Bet extends \yii\db\ActiveRecord
             'totalWin' => 'Total Win',
             'totalCollect' => 'Total Collect',
             'totalSuperiorCommission' => 'Total Superior Commission',
-            'voidDate' => 'Void Date',
             'masterId' => 'Master ID',
+            'packageId' => 'Package ID',
             'createdBy' => 'Created By',
             'createdAt' => 'Created At',
             'updatedBy' => 'Updated By',
@@ -139,6 +140,14 @@ class Bet extends \yii\db\ActiveRecord
                 'defaultValue' => 1
             ],
         ];
+    }
+
+    /**
+     * @return \yii\db\ActiveQuery
+     */
+    public function getPackage()
+    {
+        return $this->hasOne(Package::class, ['id' => 'packageId']);
     }
 
     /**
