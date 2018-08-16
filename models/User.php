@@ -39,6 +39,9 @@ use yii\web\IdentityInterface;
  * @property Master $master
  * @property UserDetail $userDetail
  * @property AuthAssignment[] $authAssignments
+ * @property User[] $players
+ * @property Bet[] $bets
+ * @property Bet[] $processedBets
  *
  * Non-persistent fields
  * @property string $password
@@ -345,6 +348,31 @@ class User extends ActiveRecord implements IdentityInterface
     {
         //return $this->auth_key;
         return null;
+    }
+
+    /**
+     * @return \yii\db\ActiveQuery
+     */
+    public function getPlayers() //Get players under the agent
+    {
+        return $this->hasMany(User::class, ['agentId' => 'id']);
+    }
+
+    /**
+     * @return \yii\db\ActiveQuery
+     */
+    public function getBets() //Get associated bets
+    {
+        return $this->hasMany(Bet::class, ['createdBy' => 'id']);
+    }
+
+    /**
+     * @return \yii\db\ActiveQuery
+     */
+    public function getProcessedBets() //Get associated bets
+    {
+        return $this->hasMany(Bet::class, ['createdBy' => 'id'])
+            ->andOnCondition(['bet.status' => Yii::$app->params['BET']['STATUS']['PROCESSED']]);
     }
 
     /**

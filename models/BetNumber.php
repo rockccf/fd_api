@@ -9,11 +9,14 @@ use yii\db\ActiveRecord;
 use yii\db\Expression;
 
 /**
- * This is the model class for table "bet_detail".
+ * This is the model class for table "bet_number".
  *
  * @property int $id
  * @property int $version
+ * @property int $rowIndex
  * @property int $number
+ * @property int $betOption
+ * @property int $status
  * @property string $big
  * @property string $small
  * @property string $4a
@@ -30,38 +33,28 @@ use yii\db\Expression;
  * @property string $3e
  * @property string $5d
  * @property string $6d
+ * @property array $companyCodes
+ * @property array $drawDates
+ * @property string $totalBet
  * @property string $totalSales
  * @property string $totalReject
- * @property string $totalCommission
- * @property string $totalWin
- * @property string $totalCollect
- * @property string $totalSuperiorCommission
- * @property int $status
- * @property string $voidDate
- * @property string $remarks
- * @property string $drawDate
- * @property int $companyDrawId
- * @property int $betNumberId
  * @property int $betId
  * @property int $createdBy
  * @property string $createdAt
  * @property int $updatedBy
  * @property string $updatedAt
  *
- * @property CompanyDraw $companyDraw
- * @property BetNumber $betNumber
+ * @property BetDetail[] $betDetails
  * @property Bet $bet
- * @property BetDetailReject[] $betDetailRejects
- * @property BetDetailWin[] $betDetailWins
  */
-class BetDetail extends \yii\db\ActiveRecord
+class BetNumber extends \yii\db\ActiveRecord
 {
     /**
      * {@inheritdoc}
      */
     public static function tableName()
     {
-        return 'bet_detail';
+        return 'bet_number';
     }
 
     /**
@@ -70,13 +63,10 @@ class BetDetail extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['version', 'number', 'status', 'companyDrawId', 'betNumberId', 'betId'], 'integer'],
-            [['number', 'totalSales', 'totalCommission', 'status', 'drawDate', 'companyDrawId', 'betNumberId', 'betId'], 'required'],
-            [['big', 'small', '4a', '4b', '4c', '4d', '4e', '4f', '3abc', '3a', '3b', '3c', '3d', '3e', '5d', '6d', 'totalSales', 'totalReject', 'totalCommission', 'totalWin', 'totalCollect', 'totalSuperiorCommission'], 'number'],
-            [['voidDate', 'drawDate'], 'safe'],
-            [['remarks'], 'string', 'max' => 255],
-            [['companyDrawId'], 'exist', 'skipOnError' => true, 'targetClass' => CompanyDraw::class, 'targetAttribute' => ['companyDrawId' => 'id']],
-            [['betNumberId'], 'exist', 'skipOnError' => true, 'targetClass' => BetNumber::className(), 'targetAttribute' => ['betNumberId' => 'id']],
+            [['version', 'rowIndex', 'number', 'betOption', 'status', 'betId'], 'integer'],
+            [['rowIndex', 'number', 'betOption', 'status', 'companyCodes', 'drawDates', 'totalBet', 'betId'], 'required'],
+            [['big', 'small', '4a', '4b', '4c', '4d', '4e', '4f', '3abc', '3a', '3b', '3c', '3d', '3e', '5d', '6d', 'totalBet', 'totalSales', 'totalReject'], 'number'],
+            [['companyCodes', 'drawDates'], 'safe'],
             [['betId'], 'exist', 'skipOnError' => true, 'targetClass' => Bet::class, 'targetAttribute' => ['betId' => 'id']]
         ];
     }
@@ -89,7 +79,10 @@ class BetDetail extends \yii\db\ActiveRecord
         return [
             'id' => 'ID',
             'version' => 'Version',
+            'rowIndex' => 'Row Index',
             'number' => 'Number',
+            'betOption' => 'Bet Option',
+            'status' => 'Status',
             'big' => 'Big',
             'small' => 'Small',
             '4a' => '4a',
@@ -106,18 +99,11 @@ class BetDetail extends \yii\db\ActiveRecord
             '3e' => '3e',
             '5d' => '5d',
             '6d' => '6d',
+            'companyCodes' => 'Company Codes',
+            'drawDates' => 'Draw Dates',
+            'totalBet' => 'Total Bet',
             'totalSales' => 'Total Sales',
             'totalReject' => 'Total Reject',
-            'totalCommission' => 'Total Commission',
-            'totalWin' => 'Total Win',
-            'totalCollect' => 'Total Collect',
-            'totalSuperiorCommission' => 'Total Superior Commission',
-            'status' => 'Status',
-            'voidDate' => 'Void Date',
-            'remarks' => 'Remarks',
-            'drawDate' => 'Draw Date',
-            'companyDrawId' => 'Company Draw ID',
-            'betNumberId' => 'Bet Number ID',
             'betId' => 'Bet ID',
             'createdBy' => 'Created By',
             'createdAt' => 'Created At',
@@ -150,14 +136,9 @@ class BetDetail extends \yii\db\ActiveRecord
     /**
      * @return \yii\db\ActiveQuery
      */
-    public function getCompanyDraw()
+    public function getBetDetails()
     {
-        return $this->hasOne(CompanyDraw::class, ['id' => 'companyDrawId']);
-    }
-
-    public function getBetNumber()
-    {
-        return $this->hasOne(BetNumber::class, ['id' => 'betNumberId']);
+        return $this->hasMany(BetDetail::class, ['betNumberId' => 'id']);
     }
 
     /**
@@ -166,21 +147,5 @@ class BetDetail extends \yii\db\ActiveRecord
     public function getBet()
     {
         return $this->hasOne(Bet::class, ['id' => 'betId']);
-    }
-
-    /**
-     * @return \yii\db\ActiveQuery
-     */
-    public function getBetDetailRejects()
-    {
-        return $this->hasMany(BetDetailReject::class, ['betDetailId' => 'id']);
-    }
-
-    /**
-     * @return \yii\db\ActiveQuery
-     */
-    public function getBetDetailWins()
-    {
-        return $this->hasMany(BetDetailWin::class, ['betDetailId' => 'id']);
     }
 }

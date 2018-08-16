@@ -7,6 +7,7 @@ use yii\behaviors\BlameableBehavior;
 use yii\behaviors\TimestampBehavior;
 use yii\db\ActiveRecord;
 use yii\db\Expression;
+use yii\helpers\ArrayHelper;
 
 /**
  * This is the model class for table "bet".
@@ -14,6 +15,7 @@ use yii\db\Expression;
  * @property int $id
  * @property int $version
  * @property int $status
+ * @property int $betMethod
  * @property string $betMaxLimitBig
  * @property string $betMaxLimitSmall
  * @property string $betMaxLimit4a
@@ -36,6 +38,10 @@ use yii\db\Expression;
  * @property string $extra4dCommRate
  * @property string $extra6dCommRate
  * @property string $extraGdCommRate
+ * @property string $superior4dCommRate
+ * @property string $superior6dCommRate
+ * @property string $superiorGdCommRate
+ * @property string $masterCommRate
  * @property string $totalSales
  * @property string $totalCommission
  * @property string $totalWin
@@ -51,9 +57,14 @@ use yii\db\Expression;
  * @property Package $package
  * @property Master $master
  * @property BetDetail[] $betDetails
+ * @property BetNumber[] $betNumbers
+ * @property User $creator
+ * @property string $slipText
  */
 class Bet extends \yii\db\ActiveRecord
 {
+    public $volume;
+
     /**
      * {@inheritdoc}
      */
@@ -68,9 +79,9 @@ class Bet extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['version', 'status', 'masterId'], 'integer'],
-            [['status', 'betMaxLimitBig', 'betMaxLimitSmall', 'betMaxLimit4a', 'betMaxLimit4b', 'betMaxLimit4c', 'betMaxLimit4d', 'betMaxLimit4e', 'betMaxLimit4f', 'betMaxLimit3abc', 'betMaxLimit3a', 'betMaxLimit3b', 'betMaxLimit3c', 'betMaxLimit3d', 'betMaxLimit3e', 'betMaxLimit5d', 'betMaxLimit6d', '4dCommRate', '6dCommRate', 'gdCommRate', 'masterId'], 'required'],
-            [['betMaxLimitBig', 'betMaxLimitSmall', 'betMaxLimit4a', 'betMaxLimit4b', 'betMaxLimit4c', 'betMaxLimit4d', 'betMaxLimit4e', 'betMaxLimit4f', 'betMaxLimit3abc', 'betMaxLimit3a', 'betMaxLimit3b', 'betMaxLimit3c', 'betMaxLimit3d', 'betMaxLimit3e', 'betMaxLimit5d', 'betMaxLimit6d', '4dCommRate', '6dCommRate', 'gdCommRate', 'extra4dCommRate', 'extra6dCommRate', 'extraGdCommRate', 'totalSales', 'totalCommission', 'totalWin', 'totalCollect', 'totalSuperiorCommission'], 'number'],
+            [['version', 'status', 'betMethod', 'masterId'], 'integer'],
+            [['status', 'betMethod', 'betMaxLimitBig', 'betMaxLimitSmall', 'betMaxLimit4a', 'betMaxLimit4b', 'betMaxLimit4c', 'betMaxLimit4d', 'betMaxLimit4e', 'betMaxLimit4f', 'betMaxLimit3abc', 'betMaxLimit3a', 'betMaxLimit3b', 'betMaxLimit3c', 'betMaxLimit3d', 'betMaxLimit3e', 'betMaxLimit5d', 'betMaxLimit6d', '4dCommRate', '6dCommRate', 'gdCommRate', 'masterCommRate', 'masterId'], 'required'],
+            [['betMaxLimitBig', 'betMaxLimitSmall', 'betMaxLimit4a', 'betMaxLimit4b', 'betMaxLimit4c', 'betMaxLimit4d', 'betMaxLimit4e', 'betMaxLimit4f', 'betMaxLimit3abc', 'betMaxLimit3a', 'betMaxLimit3b', 'betMaxLimit3c', 'betMaxLimit3d', 'betMaxLimit3e', 'betMaxLimit5d', 'betMaxLimit6d', '4dCommRate', '6dCommRate', 'gdCommRate', 'extra4dCommRate', 'extra6dCommRate', 'extraGdCommRate', 'superior4dCommRate', 'superior6dCommRate', 'superiorGdCommRate', 'masterCommRate', 'totalSales', 'totalCommission', 'totalWin', 'totalCollect', 'totalSuperiorCommission'], 'number'],
             [['masterId'], 'exist', 'skipOnError' => true, 'targetClass' => Master::class, 'targetAttribute' => ['masterId' => 'id']],
             [['packageId'], 'exist', 'skipOnError' => true, 'targetClass' => Package::class, 'targetAttribute' => ['packageId' => 'id']]
         ];
@@ -85,6 +96,7 @@ class Bet extends \yii\db\ActiveRecord
             'id' => 'ID',
             'version' => 'Version',
             'status' => 'Status',
+            'betMethod' => 'Bet Method',
             'betMaxLimitBig' => 'Bet Max Limit Big',
             'betMaxLimitSmall' => 'Bet Max Limit Small',
             'betMaxLimit4a' => 'Bet Max Limit4a',
@@ -104,16 +116,20 @@ class Bet extends \yii\db\ActiveRecord
             '4dCommRate' => '4d Comm Rate',
             '6dCommRate' => '6d Comm Rate',
             'gdCommRate' => 'Gd Comm Rate',
-            'extra4dCommRate' => 'Extra4d Comm Rate',
-            'extra6dCommRate' => 'Extra6d Comm Rate',
+            'extra4dCommRate' => 'Extra 4d Comm Rate',
+            'extra6dCommRate' => 'Extra 6d Comm Rate',
             'extraGdCommRate' => 'Extra Gd Comm Rate',
+            'superior4dCommRate' => 'Superior 4d Comm Rate',
+            'superior6dCommRate' => 'Superior 6d Comm Rate',
+            'superiorGdCommRate' => 'Superior Gd Comm Rate',
+            'masterCommRate' => 'Master Comm Rate',
             'totalSales' => 'Total Sales',
             'totalCommission' => 'Total Commission',
             'totalWin' => 'Total Win',
             'totalCollect' => 'Total Collect',
             'totalSuperiorCommission' => 'Total Superior Commission',
-            'masterId' => 'Master ID',
             'packageId' => 'Package ID',
+            'masterId' => 'Master ID',
             'createdBy' => 'Created By',
             'createdAt' => 'Created At',
             'updatedBy' => 'Updated By',
@@ -142,6 +158,154 @@ class Bet extends \yii\db\ActiveRecord
         ];
     }
 
+    // filter out some fields, best used when you want to inherit the parent implementation
+    // and blacklist some sensitive fields.
+    public function fields()
+    {
+        $fields = parent::fields();
+
+        $fields['betMaxLimitBig'] = function ($model) {
+            return floatval($model->betMaxLimitBig); //Cast string to float/double type
+        };
+
+        $fields['betMaxLimitSmall'] = function ($model) {
+            return floatval($model->betMaxLimitSmall); //Cast string to float/double type
+        };
+
+        $fields['betMaxLimit4a'] = function ($model) {
+            return floatval($model->betMaxLimit4a); //Cast string to float/double type
+        };
+
+        $fields['betMaxLimit4b'] = function ($model) {
+            return floatval($model->betMaxLimit4b); //Cast string to float/double type
+        };
+
+        $fields['betMaxLimit4c'] = function ($model) {
+            return floatval($model->betMaxLimit4c); //Cast string to float/double type
+        };
+
+        $fields['betMaxLimit4d'] = function ($model) {
+            return floatval($model->betMaxLimit4d); //Cast string to float/double type
+        };
+
+        $fields['betMaxLimit4e'] = function ($model) {
+            return floatval($model->betMaxLimit4e); //Cast string to float/double type
+        };
+
+        $fields['betMaxLimit4f'] = function ($model) {
+            return floatval($model->betMaxLimit4f); //Cast string to float/double type
+        };
+
+        $fields['betMaxLimit3abc'] = function ($model) {
+            return floatval($model->betMaxLimit3abc); //Cast string to float/double type
+        };
+
+        $fields['betMaxLimit3a'] = function ($model) {
+            return floatval($model->betMaxLimit3a); //Cast string to float/double type
+        };
+
+        $fields['betMaxLimit3b'] = function ($model) {
+            return floatval($model->betMaxLimit3b); //Cast string to float/double type
+        };
+
+        $fields['betMaxLimit3c'] = function ($model) {
+            return floatval($model->betMaxLimit3c); //Cast string to float/double type
+        };
+
+        $fields['betMaxLimit3d'] = function ($model) {
+            return floatval($model->betMaxLimit3d); //Cast string to float/double type
+        };
+
+        $fields['betMaxLimit3e'] = function ($model) {
+            return floatval($model->betMaxLimit3e); //Cast string to float/double type
+        };
+
+        $fields['betMaxLimit5d'] = function ($model) {
+            return floatval($model->betMaxLimit5d); //Cast string to float/double type
+        };
+
+        $fields['betMaxLimit6d'] = function ($model) {
+            return floatval($model->betMaxLimit6d); //Cast string to float/double type
+        };
+
+        $fields['4dCommRate'] = function ($model) {
+            return floatval($model->{'4dCommRate'}); //Cast string to float/double type
+        };
+
+        $fields['6dCommRate'] = function ($model) {
+            return floatval($model->{'6dCommRate'}); //Cast string to float/double type
+        };
+
+        $fields['gdCommRate'] = function ($model) {
+            return floatval($model->gdCommRate); //Cast string to float/double type
+        };
+
+        $fields['extra4dCommRate'] = function ($model) {
+            return floatval($model->extra4dCommRate); //Cast string to float/double type
+        };
+
+        $fields['extra6dCommRate'] = function ($model) {
+            return floatval($model->extra6dCommRate); //Cast string to float/double type
+        };
+
+        $fields['extraGdCommRate'] = function ($model) {
+            return floatval($model->extraGdCommRate); //Cast string to float/double type
+        };
+
+        $fields['superior4dCommRate'] = function ($model) {
+            return floatval($model->superior4dCommRate); //Cast string to float/double type
+        };
+
+        $fields['superior6dCommRate'] = function ($model) {
+            return floatval($model->superior6dCommRate); //Cast string to float/double type
+        };
+
+        $fields['superiorGdCommRate'] = function ($model) {
+            return floatval($model->superiorGdCommRate); //Cast string to float/double type
+        };
+
+        $fields['masterCommRate'] = function ($model) {
+            return floatval($model->masterCommRate); //Cast string to float/double type
+        };
+
+        $fields['totalSales'] = function ($model) {
+            return floatval($model->totalSales); //Cast string to float/double type
+        };
+
+        $fields['totalCommission'] = function ($model) {
+            return floatval($model->totalCommission); //Cast string to float/double type
+        };
+
+        $fields['totalWin'] = function ($model) {
+            return floatval($model->totalWin); //Cast string to float/double type
+        };
+
+        $fields['totalCollect'] = function ($model) {
+            return floatval($model->totalCollect); //Cast string to float/double type
+        };
+
+        $fields['totalSuperiorCommission'] = function ($model) {
+            return floatval($model->totalSuperiorCommission); //Cast string to float/double type
+        };
+
+        return $fields;
+    }
+
+    public function extraFields()
+    {
+        $extraFields = parent::extraFields();
+
+        $extraFields['creator'] = function ($model) {
+            return $model->creator;
+        };
+
+        $extraFields['slipText'] = function ($model) {
+            return $model->slipText;
+        };
+
+        return $extraFields;
+    }
+
     /**
      * @return \yii\db\ActiveQuery
      */
@@ -164,5 +328,128 @@ class Bet extends \yii\db\ActiveRecord
     public function getBetDetails()
     {
         return $this->hasMany(BetDetail::class, ['betId' => 'id']);
+    }
+
+    /**
+     * @return \yii\db\ActiveQuery
+     */
+    public function getCreator()
+    {
+        return $this->hasOne(User::class, ['id' => 'createdBy']);
+    }
+
+    /**
+     * @return \yii\db\ActiveQuery
+     */
+    public function getBetNumbers()
+    {
+        return $this->hasMany(BetNumber::class, ['betId' => 'id']);
+    }
+
+    /**
+     * @return string
+     */
+    public function getSlipText() {
+        $username = $this->creator->username;
+        $result = "$username\n";
+        foreach ($this->betNumbers as $betNumber) {
+            $drawDateString = implode(',', array_map(function ($drawDate) {
+                $dateObj = new \DateTime($drawDate);
+                return $dateObj->format('md');
+            }, $betNumber->drawDates));
+            $result .= '{'.$drawDateString.'}'."\n";
+
+            $companyString = implode('',$betNumber->companyCodes);
+            $result .= '('.$companyString.')'."\n";
+
+            $betAmountString = "";
+            $big = $betNumber->big;
+            $small = $betNumber->small;
+            $amount4a = $betNumber->{'4a'};
+            $amount4b = $betNumber->{'4b'};
+            $amount4c = $betNumber->{'4c'};
+            $amount4d = $betNumber->{'4d'};
+            $amount4e = $betNumber->{'4e'};
+            $amount4f = $betNumber->{'4f'};
+            $amount3abc = $betNumber->{'3abc'};
+            $amount3a = $betNumber->{'3a'};
+            $amount3b = $betNumber->{'3b'};
+            $amount3c = $betNumber->{'3c'};
+            $amount3d = $betNumber->{'3d'};
+            $amount3e = $betNumber->{'3e'};
+            $amount5d = $betNumber->{'5d'};
+            $amount6d = $betNumber->{'6d'};
+
+            if (!empty($big)) {
+                $betAmountString .= " B".floatval($big);
+            }
+            if (!empty($small)) {
+                $betAmountString .= " S".floatval($small);
+            }
+            if (!empty($amount4a)) {
+                $betAmountString .= " 4A".floatval($amount4a);
+            }
+            if (!empty($amount4b)) {
+                $betAmountString .= " 4B".floatval($amount4b);
+            }
+            if (!empty($amount4c)) {
+                $betAmountString .= " 4C".floatval($amount4c);
+            }
+            if (!empty($amount4d)) {
+                $betAmountString .= " 4D".floatval($amount4d);
+            }
+            if (!empty($amount4e)) {
+                $betAmountString .= " 4E".floatval($amount4e);
+            }
+            if (!empty($amount4f)) {
+                $betAmountString .= " 4F".floatval($amount4f);
+            }
+            if (!empty($amount3abc)) {
+                $betAmountString .= " 3ABC".floatval($amount3abc);
+            }
+            if (!empty($amount3a)) {
+                $betAmountString .= " 3A".floatval($amount3a);
+            }
+            if (!empty($amount3b)) {
+                $betAmountString .= " 3B".floatval($amount3b);
+            }
+            if (!empty($amount3c)) {
+                $betAmountString .= " 3C".floatval($amount3c);
+            }
+            if (!empty($amount3d)) {
+                $betAmountString .= " 3D".floatval($amount3d);
+            }
+            if (!empty($amount3e)) {
+                $betAmountString .= " 3E".floatval($amount3e);
+            }
+            if (!empty($amount5d)) {
+                $betAmountString .= " 5D".floatval($amount5d);
+            }
+            if (!empty($amount6d)) {
+                $betAmountString .= " 6D".floatval($amount6d);
+            }
+
+            if ($betNumber->status == Yii::$app->params['BET']['NUMBER']['STATUS']['ACCEPTED']) {
+                $stat = 'A';
+            } else if ($betNumber->status == Yii::$app->params['BET']['NUMBER']['STATUS']['LIMITED']) {
+                $stat = 'L';
+            } else if ($betNumber->status == Yii::$app->params['BET']['NUMBER']['STATUS']['REJECTED']) {
+                $stat = 'R';
+            }
+            if ($betNumber->betOption == Yii::$app->params['BET']['NUMBER']['OPTION']['SINGLE']) {
+                $result .= $betNumber->number."($stat) =$betAmountString\n";
+            }
+
+            $totalBet = $betNumber->totalBet ?? 0;
+            $totalSales = $betNumber->totalSales ?? 0;
+            $totalReject = $betNumber->totalReject ?? 0;
+            if ($betNumber->status != Yii::$app->params['BET']['NUMBER']['STATUS']['ACCEPTED']) {
+                $result .= "GT:$totalSales(A) $totalBet(B) $totalReject(R)";
+            } else {
+                $result .= "GT:$totalSales(A)";
+            }
+        }
+
+        return $result;
     }
 }

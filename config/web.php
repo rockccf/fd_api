@@ -130,7 +130,7 @@ $config = [
             'class' => 'yii\mutex\MysqlMutex',
         ],
         'urlManager' => [
-            'enablePrettyUrl' => false,
+            'enablePrettyUrl' => true,
             'enableStrictParsing' => false,
             'showScriptName' => false,
             'rules' => [
@@ -183,7 +183,20 @@ $config = [
                     'class' => 'yii\rest\UrlRule',
                     'controller' => 'bet',
                     'pluralize' => URL_PLURALIZE,
+                    'extraPatterns' => [
+                        'GET get-bet-slip-history' => 'get-bet-slip-history',
+                        'OPTIONS get-bet-slip-history' => 'options'
+                    ]
                 ],
+                [
+                    'class' => 'yii\rest\UrlRule',
+                    'controller' => 'report',
+                    'pluralize' => URL_PLURALIZE,
+                    'extraPatterns' => [
+                        'GET get-report' => 'get-report',
+                        'OPTIONS get-report' => 'options'
+                    ]
+                ]
             ],
         ],
     ],

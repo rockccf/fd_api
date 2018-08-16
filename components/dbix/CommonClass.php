@@ -139,6 +139,30 @@ class CommonClass extends BaseObject
                         } else {
                             $model = $model->andFilterWhere(["not", ["$filterModel.$column" => $value]]);
                         }
+                    } else if ($operator == "gte") {
+                        if (is_null($value)) {
+                            $model = $model->andWhere([">=", "$filterModel.$column",$value]);
+                        } else {
+                            $model = $model->andFilterWhere([">=", "$filterModel.$column",$value]);
+                        }
+                    } else if ($operator == "gt") {
+                        if (is_null($value)) {
+                            $model = $model->andWhere([">", "$filterModel.$column",$value]);
+                        } else {
+                            $model = $model->andFilterWhere([">", "$filterModel.$column",$value]);
+                        }
+                    } else if ($operator == "lte") {
+                        if (is_null($value)) {
+                            $model = $model->andWhere(["<=", "$filterModel.$column",$value]);
+                        } else {
+                            $model = $model->andFilterWhere(["<=", "$filterModel.$column",$value]);
+                        }
+                    } else if ($operator == "lt") {
+                        if (is_null($value)) {
+                            $model = $model->andWhere(["<=", "$filterModel.$column",$value]);
+                        } else {
+                            $model = $model->andFilterWhere(["<=", "$filterModel.$column",$value]);
+                        }
                     } else { //Equals
                         if (is_null($value)) {
                             $model = $model->andWhere(["$filterModel.$column" => $value]);
@@ -173,6 +197,24 @@ class CommonClass extends BaseObject
                             $model = $model->andWhere([">=", "$filterModel.$column",$value]);
                         } else {
                             $model = $model->andFilterWhere([">=", "$filterModel.$column",$value]);
+                        }
+                    } else if ($operator == "gt") {
+                        if (is_null($value)) {
+                            $model = $model->andWhere([">", "$filterModel.$column",$value]);
+                        } else {
+                            $model = $model->andFilterWhere([">", "$filterModel.$column",$value]);
+                        }
+                    } else if ($operator == "lte") {
+                        if (is_null($value)) {
+                            $model = $model->andWhere(["<=", "$filterModel.$column",$value]);
+                        } else {
+                            $model = $model->andFilterWhere(["<=", "$filterModel.$column",$value]);
+                        }
+                    } else if ($operator == "lt") {
+                        if (is_null($value)) {
+                            $model = $model->andWhere(["<=", "$filterModel.$column",$value]);
+                        } else {
+                            $model = $model->andFilterWhere(["<=", "$filterModel.$column",$value]);
                         }
                     } else { //Equals
                         if (is_null($value)) {

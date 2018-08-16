@@ -11,6 +11,7 @@ use Yii;
 use Goutte\Client;
 use yii\console\Controller;
 use yii\console\ExitCode;
+use yii\db\Expression;
 use yii\helpers\ArrayHelper;
 use yii\web\ServerErrorHttpException;
 
@@ -61,6 +62,7 @@ class BetController extends Controller
         $i = 0;
         foreach ($fstNumbers as $fstNumber) {
             $value = trim($fstNumber->nodeValue);
+            $value = preg_replace('/\xc2\xa0/','',$value);
             if (empty($value)) {
                 Yii::error("fstNumber, value is empty. i = $i");
                 return ExitCode::SOFTWARE;
@@ -137,6 +139,7 @@ class BetController extends Controller
         $i = 0;
         foreach ($specialConNumbers as $specialConNumber) {
             $value = trim($specialConNumber->nodeValue);
+            $value = preg_replace('/\xc2\xa0/','',$value);
             if (empty($value)) {
                 Yii::error("specialConNumber, value is empty. i = $i");
                 return ExitCode::SOFTWARE;
@@ -194,6 +197,8 @@ class BetController extends Controller
         $i = 0;
         foreach ($toto5d6dNumbers as $toto5d6dNumber) {
             $value = trim($toto5d6dNumber->nodeValue);
+            Yii::info(urlencode($value));
+            $value = preg_replace('/\xc2\xa0/','',$value);
             if (empty($value)) {
                 Yii::error("toto5d6dNumber, value is empty. i = $i");
                 return ExitCode::SOFTWARE;
@@ -203,16 +208,16 @@ class BetController extends Controller
                     $toto5dArray["1st"] = $value;
                     break;
                 case 1:
-                    $toto5dArray["2nd"] = $value;
-                    break;
-                case 2:
-                    $toto5dArray["3rd"] = $value;
-                    break;
-                case 3:
                     $toto5dArray["4th"] = $value;
                     break;
-                case 4:
+                case 2:
+                    $toto5dArray["2nd"] = $value;
+                    break;
+                case 3:
                     $toto5dArray["5th"] = $value;
+                    break;
+                case 4:
+                    $toto5dArray["3rd"] = $value;
                     break;
                 case 5:
                     $toto5dArray["6th"] = $value;
@@ -347,65 +352,66 @@ class BetController extends Controller
                 }
                 break;
             case 'T5': //Toto 5D
-                if (strlen($resultsArray["1st"] != 5)) {
+                if (strlen($resultsArray["1st"]) != 5) {
+                    Yii::info("hehehe = ".strlen($resultsArray["1st"]));
                     Yii::error("resultsArray['1st'] != 5, code = ".$code.", resultsArray['1st'] = ".$resultsArray['1st']);
                     $result = false;
                 }
-                if (strlen($resultsArray["2nd"] != 5)) {
+                if (strlen($resultsArray["2nd"]) != 5) {
                     Yii::error("resultsArray['2nd'] != 5, code = ".$code.", resultsArray['2nd'] = ".$resultsArray['2nd']);
                     $result = false;
                 }
-                if (strlen($resultsArray["3rd"] != 5)) {
+                if (strlen($resultsArray["3rd"]) != 5) {
                     Yii::error("resultsArray['3rd'] != 5, code = ".$code.", resultsArray['3rd'] = ".$resultsArray['3rd']);
                     $result = false;
                 }
-                if (strlen($resultsArray["4th"] != 4)) {
+                if (strlen($resultsArray["4th"]) != 4) {
                     Yii::error("resultsArray['4th'] != 4, code = ".$code.", resultsArray['4th'] = ".$resultsArray['4th']);
                     $result = false;
                 }
-                if (strlen($resultsArray["5th"] != 3)) {
+                if (strlen($resultsArray["5th"]) != 3) {
                     Yii::error("resultsArray['5th'] != 3, code = ".$code.", resultsArray['5th'] = ".$resultsArray['5th']);
                     $result = false;
                 }
-                if (strlen($resultsArray["6th"] != 2)) {
+                if (strlen($resultsArray["6th"]) != 2) {
                     Yii::error("resultsArray['6th'] != 2, code = ".$code.", resultsArray['6th'] = ".$resultsArray['6th']);
                     $result = false;
                 }
                 break;
             case 'T6': //Toto 6D
-                if (strlen($resultsArray["1st"] != 6)) {
+                if (strlen($resultsArray["1st"]) != 6) {
                     Yii::error("resultsArray['1st'] != 6, code = ".$code.", resultsArray['1st'] = ".$resultsArray['1st']);
                     $result = false;
                 }
-                if (strlen($resultsArray["2nd1"] != 5)) {
+                if (strlen($resultsArray["2nd1"]) != 5) {
                     Yii::error("resultsArray['2nd1'] != 5, code = ".$code.", resultsArray['2nd1'] = ".$resultsArray['2nd1']);
                     $result = false;
                 }
-                if (strlen($resultsArray["2nd2"] != 5)) {
+                if (strlen($resultsArray["2nd2"]) != 5) {
                     Yii::error("resultsArray['2nd2'] != 5, code = ".$code.", resultsArray['2nd2'] = ".$resultsArray['2nd2']);
                     $result = false;
                 }
-                if (strlen($resultsArray["3rd1"] != 4)) {
+                if (strlen($resultsArray["3rd1"]) != 4) {
                     Yii::error("resultsArray['3rd1'] != 4, code = ".$code.", resultsArray['3rd1'] = ".$resultsArray['3rd1']);
                     $result = false;
                 }
-                if (strlen($resultsArray["3rd2"] != 4)) {
+                if (strlen($resultsArray["3rd2"]) != 4) {
                     Yii::error("resultsArray['3rd2'] != 4, code = ".$code.", resultsArray['3rd2'] = ".$resultsArray['3rd2']);
                     $result = false;
                 }
-                if (strlen($resultsArray["4th1"] != 3)) {
+                if (strlen($resultsArray["4th1"]) != 3) {
                     Yii::error("resultsArray['4th1'] != 3, code = ".$code.", resultsArray['4th1'] = ".$resultsArray['4th1']);
                     $result = false;
                 }
-                if (strlen($resultsArray["4th2"] != 3)) {
+                if (strlen($resultsArray["4th2"]) != 3) {
                     Yii::error("resultsArray['4th2'] != 3, code = ".$code.", resultsArray['4th2'] = ".$resultsArray['4th2']);
                     $result = false;
                 }
-                if (strlen($resultsArray["5th1"] != 2)) {
+                if (strlen($resultsArray["5th1"]) != 2) {
                     Yii::error("resultsArray['5th1'] != 2, code = ".$code.", resultsArray['5th1'] = ".$resultsArray['5th1']);
                     $result = false;
                 }
-                if (strlen($resultsArray["5th2"] != 2)) {
+                if (strlen($resultsArray["5th2"]) != 2) {
                     Yii::error("resultsArray['5th2'] != 2, code = ".$code.", resultsArray['5th2'] = ".$resultsArray['5th2']);
                     $result = false;
                 }
@@ -430,7 +436,7 @@ class BetController extends Controller
             case Yii::$app->params['COMPANY']['CODE']['SARAWAK']:
                 $company = Company::findOne(['code'=>$code]);
                 $companyDraw = CompanyDraw::findOne(['companyId'=>$company->id,'drawDate'=>$today->format('Y-m-d')]);
-                $companyDraw->checkResultsDate = $today;
+                $companyDraw->checkResultsDate = new Expression('Now()');
                 $companyDraw->{'1stPrize'} = $resultsArray["1st"];
                 $companyDraw->{'2ndPrize'} = $resultsArray["2nd"];
                 $companyDraw->{'3rdPrize'} = $resultsArray["3rd"];
@@ -463,7 +469,7 @@ class BetController extends Controller
             case 'T5':
                 $company = Company::findOne(['code'=>Yii::$app->params['COMPANY']['CODE']['TOTO']]);
                 $companyDraw = CompanyDraw::findOne(['companyId'=>$company->id,'drawDate'=>$today->format('Y-m-d')]);
-                $companyDraw->checkResultsDate = $today;
+                $companyDraw->checkResultsDate = new Expression('Now()');
                 $companyDraw->{'5d1stPrize'} = $resultsArray["1st"];
                 $companyDraw->{'5d2ndPrize'} = $resultsArray["2nd"];
                 $companyDraw->{'5d3rdPrize'} = $resultsArray["3rd"];
@@ -478,7 +484,7 @@ class BetController extends Controller
             case 'T6':
                 $company = Company::findOne(['code'=>Yii::$app->params['COMPANY']['CODE']['TOTO']]);
                 $companyDraw = CompanyDraw::findOne(['companyId'=>$company->id,'drawDate'=>$today->format('Y-m-d')]);
-                $companyDraw->checkResultsDate = $today;
+                $companyDraw->checkResultsDate = new Expression('Now()');
                 $companyDraw->{'6d1stPrize'} = $resultsArray["1st"];
                 $companyDraw->{'6d2nd1Prize'} = $resultsArray["2nd1"];
                 $companyDraw->{'6d2nd2Prize'} = $resultsArray["2nd2"];

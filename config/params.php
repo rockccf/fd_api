@@ -42,15 +42,13 @@ return [
             'DOWNLOAD' => 1,
             'VIEW' => 2
         ],
-        'REPORT_FOLDER' => '//tenant/report',
         'REPORT' => [
-            'TENANT' => [
-                'LAYOUT' => [
-                    'GENERAL' => 1000,
-                ],
-                'PO' => [
-                    'PO' => 1100,
-                ],
+            'WIN_LOSS_DETAILS' => 1000,
+            'MASTER' => [ //Starts with 2000
+
+            ],
+            'ADMIN' => [ //Starts with 3000
+
             ]
         ]
     ],
@@ -63,7 +61,7 @@ return [
         ],
         'DETAIL' => [
             'BET_METHOD' => [
-                'MULTIPLY' => 1,
+                'MULTIPLE' => 1,
                 'DIVIDE' => 2
             ],
             'AUTO_TRANSFER_MODE' => [
@@ -96,6 +94,11 @@ return [
                 'BOX' => 3,
                 'IBOX' => 4,
                 'PH' => 5
+            ],
+            'STATUS' => [
+                'ACCEPTED' => 1,
+                'LIMITED' => 2,
+                'REJECTED' => 3
             ]
         ],
         'DETAIL' => [
