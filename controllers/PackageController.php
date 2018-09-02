@@ -5,7 +5,7 @@ namespace app\controllers;
 use app\models\Category;
 use app\models\Package;
 use Yii;
-use app\components\dbix\CommonClass;
+use app\components\ccf\CommonClass;
 use yii\filters\AccessControl;
 use yii\filters\auth\HttpBearerAuth;
 use yii\filters\ContentNegotiator;

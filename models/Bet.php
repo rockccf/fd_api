@@ -43,6 +43,8 @@ use yii\helpers\ArrayHelper;
  * @property string $superiorGdCommRate
  * @property string $masterCommRate
  * @property string $totalSales
+ * @property string $ownCommission
+ * @property string $extraCommission
  * @property string $totalCommission
  * @property string $totalWin
  * @property string $totalCollect
@@ -57,6 +59,7 @@ use yii\helpers\ArrayHelper;
  * @property Package $package
  * @property Master $master
  * @property BetDetail[] $betDetails
+ * @property BetDetail[] $betDetailsSortByNumber
  * @property BetNumber[] $betNumbers
  * @property User $creator
  * @property string $slipText
@@ -81,7 +84,7 @@ class Bet extends \yii\db\ActiveRecord
         return [
             [['version', 'status', 'betMethod', 'masterId'], 'integer'],
             [['status', 'betMethod', 'betMaxLimitBig', 'betMaxLimitSmall', 'betMaxLimit4a', 'betMaxLimit4b', 'betMaxLimit4c', 'betMaxLimit4d', 'betMaxLimit4e', 'betMaxLimit4f', 'betMaxLimit3abc', 'betMaxLimit3a', 'betMaxLimit3b', 'betMaxLimit3c', 'betMaxLimit3d', 'betMaxLimit3e', 'betMaxLimit5d', 'betMaxLimit6d', '4dCommRate', '6dCommRate', 'gdCommRate', 'masterCommRate', 'masterId'], 'required'],
-            [['betMaxLimitBig', 'betMaxLimitSmall', 'betMaxLimit4a', 'betMaxLimit4b', 'betMaxLimit4c', 'betMaxLimit4d', 'betMaxLimit4e', 'betMaxLimit4f', 'betMaxLimit3abc', 'betMaxLimit3a', 'betMaxLimit3b', 'betMaxLimit3c', 'betMaxLimit3d', 'betMaxLimit3e', 'betMaxLimit5d', 'betMaxLimit6d', '4dCommRate', '6dCommRate', 'gdCommRate', 'extra4dCommRate', 'extra6dCommRate', 'extraGdCommRate', 'superior4dCommRate', 'superior6dCommRate', 'superiorGdCommRate', 'masterCommRate', 'totalSales', 'totalCommission', 'totalWin', 'totalCollect', 'totalSuperiorCommission'], 'number'],
+            [['betMaxLimitBig', 'betMaxLimitSmall', 'betMaxLimit4a', 'betMaxLimit4b', 'betMaxLimit4c', 'betMaxLimit4d', 'betMaxLimit4e', 'betMaxLimit4f', 'betMaxLimit3abc', 'betMaxLimit3a', 'betMaxLimit3b', 'betMaxLimit3c', 'betMaxLimit3d', 'betMaxLimit3e', 'betMaxLimit5d', 'betMaxLimit6d', '4dCommRate', '6dCommRate', 'gdCommRate', 'extra4dCommRate', 'extra6dCommRate', 'extraGdCommRate', 'superior4dCommRate', 'superior6dCommRate', 'superiorGdCommRate', 'masterCommRate', 'totalSales', 'ownCommission', 'extraCommission', 'totalCommission', 'totalWin', 'totalCollect', 'totalSuperiorCommission'], 'number'],
             [['masterId'], 'exist', 'skipOnError' => true, 'targetClass' => Master::class, 'targetAttribute' => ['masterId' => 'id']],
             [['packageId'], 'exist', 'skipOnError' => true, 'targetClass' => Package::class, 'targetAttribute' => ['packageId' => 'id']]
         ];
@@ -124,6 +127,8 @@ class Bet extends \yii\db\ActiveRecord
             'superiorGdCommRate' => 'Superior Gd Comm Rate',
             'masterCommRate' => 'Master Comm Rate',
             'totalSales' => 'Total Sales',
+            'ownCommission' => 'Own Commission',
+            'extraCommission' => 'Extra Commission',
             'totalCommission' => 'Total Commission',
             'totalWin' => 'Total Win',
             'totalCollect' => 'Total Collect',
@@ -272,6 +277,14 @@ class Bet extends \yii\db\ActiveRecord
             return floatval($model->totalSales); //Cast string to float/double type
         };
 
+        $fields['ownCommission'] = function ($model) {
+            return floatval($model->ownCommission); //Cast string to float/double type
+        };
+
+        $fields['extraCommission'] = function ($model) {
+            return floatval($model->extraCommission); //Cast string to float/double type
+        };
+
         $fields['totalCommission'] = function ($model) {
             return floatval($model->totalCommission); //Cast string to float/double type
         };
@@ -288,6 +301,10 @@ class Bet extends \yii\db\ActiveRecord
             return floatval($model->totalSuperiorCommission); //Cast string to float/double type
         };
 
+        $fields['creator'] = function ($model) {
+            return $model->creator;
+        };
+
         return $fields;
     }
 
@@ -301,6 +318,14 @@ class Bet extends \yii\db\ActiveRecord
 
         $extraFields['slipText'] = function ($model) {
             return $model->slipText;
+        };
+
+        $extraFields['betDetails'] = function ($model) {
+            return $model->betDetails;
+        };
+
+        $extraFields['betDetailsSortByNumber'] = function ($model) {
+            return $model->betDetailsSortByNumber;
         };
 
         return $extraFields;
@@ -333,6 +358,15 @@ class Bet extends \yii\db\ActiveRecord
     /**
      * @return \yii\db\ActiveQuery
      */
+    public function getBetDetailsSortByNumber()
+    {
+        return $this->hasMany(BetDetail::class, ['betId' => 'id'])
+            ->orderBy('betNumberId,number');
+    }
+
+    /**
+     * @return \yii\db\ActiveQuery
+     */
     public function getCreator()
     {
         return $this->hasOne(User::class, ['id' => 'createdBy']);
@@ -352,6 +386,9 @@ class Bet extends \yii\db\ActiveRecord
     public function getSlipText() {
         $username = $this->creator->username;
         $result = "$username\n";
+        $grandTotalBet = 0;
+        $grandTotalSales = 0;
+        $grandTotalReject = 0;
         foreach ($this->betNumbers as $betNumber) {
             $drawDateString = implode(',', array_map(function ($drawDate) {
                 $dateObj = new \DateTime($drawDate);
@@ -438,16 +475,107 @@ class Bet extends \yii\db\ActiveRecord
             }
             if ($betNumber->betOption == Yii::$app->params['BET']['NUMBER']['OPTION']['SINGLE']) {
                 $result .= $betNumber->number."($stat) =$betAmountString\n";
+            } else if ($betNumber->betOption == Yii::$app->params['BET']['NUMBER']['OPTION']['RETURN']) {
+                $result .= "*".$betNumber->number."*($stat) =$betAmountString\n";
+            } else if ($betNumber->betOption == Yii::$app->params['BET']['NUMBER']['OPTION']['BOX']) {
+                $result .= "B*".$betNumber->number."($stat) =$betAmountString\n";
+            } else if ($betNumber->betOption == Yii::$app->params['BET']['NUMBER']['OPTION']['IBOX']) {
+                $result .= "I*".$betNumber->number."($stat) =$betAmountString\n";
+            } else if ($betNumber->betOption == Yii::$app->params['BET']['NUMBER']['OPTION']['PH']) {
+                $result .= "P*".$betNumber->number."($stat) =$betAmountString\n";
             }
 
-            $totalBet = $betNumber->totalBet ?? 0;
-            $totalSales = $betNumber->totalSales ?? 0;
-            $totalReject = $betNumber->totalReject ?? 0;
             if ($betNumber->status != Yii::$app->params['BET']['NUMBER']['STATUS']['ACCEPTED']) {
-                $result .= "GT:$totalSales(A) $totalBet(B) $totalReject(R)";
-            } else {
-                $result .= "GT:$totalSales(A)";
+                //Proceed to get the reject bets and display all of them
+                $bds = $betNumber->betDetails;
+                foreach ($bds as $bd) {
+                    if ($bd->status != Yii::$app->params['BET']['DETAIL']['STATUS']['ACCEPTED']) {
+                        $bdr = $bd->betDetailReject;
+                        $rejectedBetAmountString = "";
+                        $rejectedBig = $bdr->big;
+                        $rejectedSmall = $bdr->small;
+                        $rejectedAmount4a = $bdr->{'4a'};
+                        $rejectedAmount4b = $bdr->{'4b'};
+                        $rejectedAmount4c = $bdr->{'4c'};
+                        $rejectedAmount4d = $bdr->{'4d'};
+                        $rejectedAmount4e = $bdr->{'4e'};
+                        $rejectedAmount4f = $bdr->{'4f'};
+                        $rejectedAmount3abc = $bdr->{'3abc'};
+                        $rejectedAmount3a = $bdr->{'3a'};
+                        $rejectedAmount3b = $bdr->{'3b'};
+                        $rejectedAmount3c = $bdr->{'3c'};
+                        $rejectedAmount3d = $bdr->{'3d'};
+                        $rejectedAmount3e = $bdr->{'3e'};
+                        $rejectedAmount5d = $bdr->{'5d'};
+                        $rejectedAmount6d = $bdr->{'6d'};
+
+                        if (!empty($rejectedBig)) {
+                            $rejectedBetAmountString .= " B".floatval($rejectedBig);
+                        }
+                        if (!empty($rejectedSmall)) {
+                            $rejectedBetAmountString .= " S".floatval($rejectedSmall);
+                        }
+                        if (!empty($rejectedAmount4a)) {
+                            $rejectedBetAmountString .= " 4A".floatval($rejectedAmount4a);
+                        }
+                        if (!empty($rejectedAmount4b)) {
+                            $rejectedBetAmountString .= " 4B".floatval($rejectedAmount4b);
+                        }
+                        if (!empty($rejectedAmount4c)) {
+                            $rejectedBetAmountString .= " 4C".floatval($rejectedAmount4c);
+                        }
+                        if (!empty($rejectedAmount4d)) {
+                            $rejectedBetAmountString .= " 4D".floatval($rejectedAmount4d);
+                        }
+                        if (!empty($rejectedAmount4e)) {
+                            $rejectedBetAmountString .= " 4E".floatval($rejectedAmount4e);
+                        }
+                        if (!empty($rejectedAmount4f)) {
+                            $rejectedBetAmountString .= " 4F".floatval($rejectedAmount4f);
+                        }
+                        if (!empty($rejectedAmount3abc)) {
+                            $rejectedBetAmountString .= " 3ABC".floatval($rejectedAmount3abc);
+                        }
+                        if (!empty($rejectedAmount3a)) {
+                            $rejectedBetAmountString .= " 3A".floatval($rejectedAmount3a);
+                        }
+                        if (!empty($rejectedAmount3b)) {
+                            $rejectedBetAmountString .= " 3B".floatval($rejectedAmount3b);
+                        }
+                        if (!empty($rejectedAmount3c)) {
+                            $rejectedBetAmountString .= " 3C".floatval($rejectedAmount3c);
+                        }
+                        if (!empty($rejectedAmount3d)) {
+                            $rejectedBetAmountString .= " 3D".floatval($rejectedAmount3d);
+                        }
+                        if (!empty($rejectedAmount3e)) {
+                            $rejectedBetAmountString .= " 3E".floatval($rejectedAmount3e);
+                        }
+                        if (!empty($rejectedAmount5d)) {
+                            $rejectedBetAmountString .= " 5D".floatval($rejectedAmount5d);
+                        }
+                        if (!empty($rejectedAmount6d)) {
+                            $rejectedBetAmountString .= " 6D".floatval($rejectedAmount6d);
+                        }
+
+                        $result .= $bd->companyDraw->company->code.' '.$bd->number."(R) =$rejectedBetAmountString\n";
+                    }
+                }
             }
+
+            $result .= "\n";
+            $grandTotalBet += $betNumber->totalBet;
+            $grandTotalSales += $betNumber->totalSales;
+            $grandTotalReject += $betNumber->totalReject;
+        }
+
+        $grandTotalBet = round($grandTotalBet,2);
+        $grandTotalSales = round($grandTotalSales,2);
+        $grandTotalReject = round($grandTotalReject,2);
+        if ($betNumber->status != Yii::$app->params['BET']['NUMBER']['STATUS']['ACCEPTED']) {
+            $result .= "GT:$grandTotalSales(A) $grandTotalBet(B) $grandTotalReject(R)";
+        } else {
+            $result .= "GT:$grandTotalSales(A)";
         }
 
         return $result;

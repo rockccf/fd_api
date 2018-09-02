@@ -42,26 +42,6 @@ class RbacController extends Controller
         $viewUser->description = 'View User';
         $auth->add($viewUser);
 
-        // add "createRole" permission
-        /*$createRole = $auth->createPermission('CREATE_ROLE');
-        $createRole->description = 'Create Role';
-        $auth->add($createRole);
-
-        // add "updateRole" permission
-        $updateRole = $auth->createPermission('UPDATE_ROLE');
-        $updateRole->description = 'Update Role';
-        $auth->add($updateRole);
-
-        // add "deleteRole" permission
-        $deleteRole = $auth->createPermission('DELETE_ROLE');
-        $deleteRole->description = 'Delete Role';
-        $auth->add($deleteRole);
-
-        // add "viewRole" permission
-        $viewRole = $auth->createPermission('VIEW_ROLE');
-        $viewRole->description = 'View Role';
-        $auth->add($viewRole);*/
-
         $createMaster = $auth->createPermission('CREATE_MASTER');
         $createMaster->description = 'Create Master';
         $auth->add($createMaster);
@@ -94,13 +74,13 @@ class RbacController extends Controller
         $viewPackage->description = 'View Package';
         $auth->add($viewPackage);
 
-        $createPackage = $auth->createPermission('CREATE_COMPANY_DRAW');
-        $createPackage->description = 'Create Company Draw';
-        $auth->add($createPackage);
+        $createCompanyDraw = $auth->createPermission('CREATE_COMPANY_DRAW');
+        $createCompanyDraw->description = 'Create Company Draw';
+        $auth->add($createCompanyDraw);
 
-        $deletePackage = $auth->createPermission('DELETE_COMPANY_DRAW');
-        $deletePackage->description = 'Delete Company Draw';
-        $auth->add($deletePackage);
+        $deleteCompanyDraw = $auth->createPermission('DELETE_COMPANY_DRAW');
+        $deleteCompanyDraw->description = 'Delete Company Draw';
+        $auth->add($deleteCompanyDraw);
 
         $bet = $auth->createPermission('BET');
         $bet->description = 'Bet';
@@ -115,14 +95,12 @@ class RbacController extends Controller
         $auth->addChild($admin, $updateUser);
         $auth->addChild($admin, $deleteUser);
         $auth->addChild($admin, $viewUser);
-        /*$auth->addChild($admin, $createRole);
-        $auth->addChild($admin, $updateRole);
-        $auth->addChild($admin, $deleteRole);
-        $auth->addChild($admin, $viewRole);*/
         $auth->addChild($admin, $createMaster);
         $auth->addChild($admin, $updateMaster);
         $auth->addChild($admin, $deleteMaster);
         $auth->addChild($admin, $viewMaster);
+        $auth->addChild($admin, $createCompanyDraw);
+        $auth->addChild($admin, $deleteCompanyDraw);
 
         // Assign roles to users. 1 and 2 are IDs returned by IdentityInterface::getId()
         // usually implemented in your User model.

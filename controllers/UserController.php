@@ -6,7 +6,7 @@ use app\models\Master;
 use app\models\User;
 use app\models\UserDetail;
 use Yii;
-use app\components\dbix\CommonClass;
+use app\components\ccf\CommonClass;
 use yii\filters\AccessControl;
 use yii\filters\auth\HttpBearerAuth;
 use yii\filters\ContentNegotiator;
@@ -157,7 +157,7 @@ class UserController extends ActiveController
         $actions = parent::actions();
 
         // disable the default "create", "update" and "delete" action
-        unset($actions['create'],$actions['delete']);
+        unset($actions['create'],$actions['update'],$actions['delete']);
 
         // customize the data provider preparation with the "prepareDataProvider()" method
         $actions['index']['prepareDataProvider'] = [$this, 'prepareDataProvider'];
@@ -175,10 +175,10 @@ class UserController extends ActiveController
         $where = null;
 
         if (Yii::$app->user->identity->userType == Yii::$app->params['USER']['TYPE']['MASTER']) {
-            $userTypes = [Yii::$app->params['USER']['TYPE']['MASTER'],Yii::$app->params['USER']['TYPE']['AGENT']];
+            $userTypes = [Yii::$app->params['USER']['TYPE']['AGENT']];
             $where = [['masterId'=>Yii::$app->user->identity->masterId,'userType'=>$userTypes]];
         } else if (Yii::$app->user->identity->userType == Yii::$app->params['USER']['TYPE']['AGENT']) {
-            $userTypes = [Yii::$app->params['USER']['TYPE']['AGENT'],Yii::$app->params['USER']['TYPE']['PLAYER']];
+            $userTypes = [Yii::$app->params['USER']['TYPE']['PLAYER']];
             $where = [['masterId'=>Yii::$app->user->identity->masterId,'userType'=>$userTypes]];
         } else if (Yii::$app->user->identity->userType == Yii::$app->params['USER']['TYPE']['PLAYER']) {
             $where = [['id'=>Yii::$app->user->identity->id]];
@@ -235,16 +235,26 @@ class UserController extends ActiveController
                 throw new ServerErrorHttpException(("Failed to assign role to the user."));
             }
 
-            Yii::info($params);
-
-            if ($user->userType == Yii::$app->params['USER']['TYPE']['AGENT'] || $user->userType == Yii::$app->params['USER']['TYPE']['PLAYER']) {
+            if ($user->userType == Yii::$app->params['USER']['TYPE']['AGENT']) {
                 $userDetail = new UserDetail();
                 $userDetail->packageId = $params['packageId'];
                 $userDetail->creditLimit = $params['creditLimit'];
-                $userDetail->creditAvailable = $params['creditLimit'];
                 $userDetail->betMethod = $params['betMethod'];
                 $userDetail->betGdLotto = $params['betGdLotto'];
                 $userDetail->bet6d = $params['bet6d'];
+                $userDetail->userId = $user->id;
+
+                if (!$userDetail->save()) {
+                    Yii::error($userDetail->errors);
+                    return $userDetail;
+                }
+            } else if ($user->userType == Yii::$app->params['USER']['TYPE']['PLAYER']) {
+                $userDetail = new UserDetail();
+                $userDetail->packageId = Yii::$app->user->identity->userDetail->packageId; //Follow upline agent settings
+                $userDetail->creditLimit = $params['creditLimit'];
+                $userDetail->betMethod = $params['betMethod'];
+                $userDetail->betGdLotto = Yii::$app->user->identity->userDetail->betGdLotto; //Follow upline agent settings
+                $userDetail->bet6d = Yii::$app->user->identity->userDetail->bet6d; //Follow upline agent settings
                 $userDetail->userId = $user->id;
 
                 if (!$userDetail->save()) {
@@ -259,6 +269,88 @@ class UserController extends ActiveController
             $response->setStatusCode(201);
             $id = implode(',', array_values($user->getPrimaryKey(true)));
             $response->getHeaders()->set('Location', Url::toRoute([$this->viewAction, 'id' => $id], true));
+        } catch (\Throwable $e) {
+            $dbTrans->rollBack();
+            throw $e;
+        }
+
+        return $user;
+    }
+
+    public function actionUpdate($id) {
+        $request = Yii::$app->request;
+        $params = $request->bodyParams;
+
+        $user = User::findOne($id);
+        $user->load($params,''); //Massive Assignment
+
+        $dbTrans = User::getDb()->beginTransaction();
+        try {
+            if (!$user->save()) {
+                Yii::error($user->errors);
+                return $user;
+            }
+
+            if ($user->userType == Yii::$app->params['USER']['TYPE']['AGENT']) {
+                $userDetail = $user->userDetail;
+                $userDetail->packageId = $params['packageId'];
+                $userDetail->creditLimit = $params['creditLimit'];
+                $userDetail->betMethod = $params['betMethod'];
+                $userDetail->betGdLotto = $params['betGdLotto'];
+                $userDetail->bet6d = $params['bet6d'];
+                $userDetail->userId = $user->id;
+
+                if (!$userDetail->save()) {
+                    Yii::error($userDetail->errors);
+                    return $userDetail;
+                }
+
+                //Proceed to update all the downline players with the same package
+                $players = $user->players;
+                if (is_array($players)) {
+                    foreach ($players as $player) {
+                        $playerUd = $player->userDetail;
+                        $playerUd->packageId = $params['packageId'];
+                        $playerUd->betGdLotto = $params['betGdLotto'];
+                        $playerUd->bet6d = $params['bet6d'];
+                        if (!$playerUd->save()) {
+                            Yii::error($playerUd->errors);
+                            return $playerUd;
+                        }
+                    }
+                }
+            } else if ($user->userType == Yii::$app->params['USER']['TYPE']['PLAYER']) {
+                $uplineAgent = $user->agent;
+                //Check if the agent has sufficient credit limit to grant
+                $creditAvailable = $uplineAgent->userDetail->creditLimit - $uplineAgent->userDetail->creditGranted;
+                $userDetail = $user->userDetail;
+                $grantedCredit = $params['creditLimit']-$userDetail->creditLimit; //This might be negative, if the agent decreases the credit limit
+                if ($grantedCredit > $creditAvailable) {
+                    Throw new UnprocessableEntityHttpException("You do not have sufficient credit to grant to the player.");
+                }
+
+                $userDetail->packageId = $uplineAgent->userDetail->packageId; //Follow upline agent settings
+                $userDetail->creditLimit = $params['creditLimit'];
+                $userDetail->betMethod = $params['betMethod']; //Follow upline agent settings
+                $userDetail->betGdLotto = $uplineAgent->userDetail->betGdLotto; //Follow upline agent settings
+                $userDetail->bet6d = $uplineAgent->userDetail->bet6d; //Follow upline agent settings
+                $userDetail->userId = $user->id;
+
+                if (!$userDetail->save()) {
+                    Yii::error($userDetail->errors);
+                    return $userDetail;
+                }
+
+                //Proceed to update upline creditGranted
+                $uplineAgentUd = $uplineAgent->userDetail;
+                $uplineAgentUd->creditGranted += $grantedCredit;
+                if (!$uplineAgentUd->save()) {
+                    Yii::error($uplineAgentUd->errors);
+                    return $uplineAgentUd;
+                }
+            }
+
+            $dbTrans->commit();
         } catch (\Throwable $e) {
             $dbTrans->rollBack();
             throw $e;

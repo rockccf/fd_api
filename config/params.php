@@ -2,14 +2,14 @@
 
 if (YII_ENV_PROD) {
     $allowedDomains = [
-        'https://www.tbt88.org'
+        'http://www.tbt88.net'
     ];
-    $portalUrl = "https://www.tbt88.org";
-    $serverName = "www.tbt88.org";
+    $portalUrl = "http://www.tbt88.net";
+    $serverName = "www.tbt88.net";
 } else if (YII_ENV_TEST) {
-    $allowedDomains = ['https://uat.tbt88.org'];
-    $portalUrl = "https://uat.tbt88.org";
-    $serverName = "uat.tbt88.org";
+    $allowedDomains = ['http://test.tbt88.net'];
+    $portalUrl = "http://test.tbt88.net";
+    $serverName = "test.tbt88.net";
 } else {
     $allowedDomains = ['*'];
     $portalUrl = "http://localhost:9200";
@@ -31,11 +31,13 @@ return [
         ],
         'ALLOWED_DOMAINS' => $allowedDomains,
         'ALLOWED_REQUEST_HEADERS' => ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization', 'If-Modified-Since', 'Cache-Control', 'Pragma'],
-        'PORTAL_URL' => $portalUrl
+        'PORTAL_URL' => $portalUrl,
+        'BET_VOID_ALLOW_MINUTES' => 5,
+        'BET_AMOUNT_ACCEPTABLE_ERROR_CENTS' => 2
     ],
     'FORMAT' => [
-        'DATETIME' => 'd-M-Y H:i:s',
-        'DATE' => 'd-M-Y'
+        'DATETIME' => 'd-m-Y H:i:s',
+        'DATE' => 'd-m-Y'
     ],
     'FILE_TEMPLATE' => [
         'MODE' => [
@@ -44,6 +46,8 @@ return [
         ],
         'REPORT' => [
             'WIN_LOSS_DETAILS' => 1000,
+            'DRAW_WINNING_NUMBER' => 1001,
+            'COMPANY_DRAW_RESULTS' => 1002,
             'MASTER' => [ //Starts with 2000
 
             ],
@@ -106,9 +110,7 @@ return [
                 'ACCEPTED' => 1,
                 'LIMITED' => 2,
                 'REJECTED' => 3,
-                'VOID' => 4,
-                'LOST' => 5,
-                'WON' => 6
+                'VOIDED' => 4
             ],
             'WIN_PRIZE_TYPE' => [
                 '4D_BIG_PRIZE_1' => 1,

@@ -2,7 +2,7 @@
 
 namespace app\controllers;
 
-use app\components\dbix\ReportClass;
+use app\components\ccf\ReportClass;
 
 use Yii;
 use yii\filters\AccessControl;
@@ -130,12 +130,16 @@ class ReportController extends ActiveController
         $extraParams = $params["extraParams"] ?? null;
         $extraParams = Json::decode($extraParams);
 
-        $content = null;
-
         $resultArray = null;
         switch ($fileTemplateId) {
             case Yii::$app->params['FILE_TEMPLATE']['REPORT']['WIN_LOSS_DETAILS']:
                 $resultArray = ReportClass::getWinLossDetails($extraParams);
+                break;
+            case Yii::$app->params['FILE_TEMPLATE']['REPORT']['DRAW_WINNING_NUMBER']:
+                $resultArray = ReportClass::getDrawWinningNumber($extraParams);
+                break;
+            case Yii::$app->params['FILE_TEMPLATE']['REPORT']['COMPANY_DRAW_RESULTS']:
+                $resultArray = ReportClass::getCompanyDrawResults($extraParams);
                 break;
         }
 

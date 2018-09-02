@@ -18,44 +18,44 @@ use yii\db\Expression;
  * @property string $drawTime
  * @property string $stopBetTime
  * @property string $checkResultsDate
- * @property int $1stPrize
- * @property int $2ndPrize
- * @property int $3rdPrize
- * @property int $special1Prize
- * @property int $special2Prize
- * @property int $special3Prize
- * @property int $special4Prize
- * @property int $special5Prize
- * @property int $special6Prize
- * @property int $special7Prize
- * @property int $special8Prize
- * @property int $special9Prize
- * @property int $special10Prize
- * @property int $consolation1Prize
- * @property int $consolation2Prize
- * @property int $consolation3Prize
- * @property int $consolation4Prize
- * @property int $consolation5Prize
- * @property int $consolation6Prize
- * @property int $consolation7Prize
- * @property int $consolation8Prize
- * @property int $consolation9Prize
- * @property int $consolation10Prize
- * @property int $5d1stPrize
- * @property int $5d2ndPrize
- * @property int $5d3rdPrize
- * @property int $5d4thPrize
- * @property int $5d5thPrize
- * @property int $5d6thPrize
- * @property int $6d1stPrize
- * @property int $6d2nd1Prize
- * @property int $6d2nd2Prize
- * @property int $6d3rd1Prize
- * @property int $6d3rd2Prize
- * @property int $6d4th1Prize
- * @property int $6d4th2Prize
- * @property int $6d5th1Prize
- * @property int $6d5th2Prize
+ * @property string $1stPrize
+ * @property string $2ndPrize
+ * @property string $3rdPrize
+ * @property string $special1Prize
+ * @property string $special2Prize
+ * @property string $special3Prize
+ * @property string $special4Prize
+ * @property string $special5Prize
+ * @property string $special6Prize
+ * @property string $special7Prize
+ * @property string $special8Prize
+ * @property string $special9Prize
+ * @property string $special10Prize
+ * @property string $consolation1Prize
+ * @property string $consolation2Prize
+ * @property string $consolation3Prize
+ * @property string $consolation4Prize
+ * @property string $consolation5Prize
+ * @property string $consolation6Prize
+ * @property string $consolation7Prize
+ * @property string $consolation8Prize
+ * @property string $consolation9Prize
+ * @property string $consolation10Prize
+ * @property string $5d1stPrize
+ * @property string $5d2ndPrize
+ * @property string $5d3rdPrize
+ * @property string $5d4thPrize
+ * @property string $5d5thPrize
+ * @property string $5d6thPrize
+ * @property string $6d1stPrize
+ * @property string $6d2nd1Prize
+ * @property string $6d2nd2Prize
+ * @property string $6d3rd1Prize
+ * @property string $6d3rd2Prize
+ * @property string $6d4th1Prize
+ * @property string $6d4th2Prize
+ * @property string $6d5th1Prize
+ * @property string $6d5th2Prize
  * @property int $companyId
  * @property int $createdBy
  * @property string $createdAt
@@ -83,9 +83,13 @@ class CompanyDraw extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['version', 'status', '1stPrize', '2ndPrize', '3rdPrize', 'special1Prize', 'special2Prize', 'special3Prize', 'special4Prize', 'special5Prize', 'special6Prize', 'special7Prize', 'special8Prize', 'special9Prize', 'special10Prize', 'consolation1Prize', 'consolation2Prize', 'consolation3Prize', 'consolation4Prize', 'consolation5Prize', 'consolation6Prize', 'consolation7Prize', 'consolation8Prize', 'consolation9Prize', 'consolation10Prize', '5d1stPrize', '5d2ndPrize', '5d3rdPrize', '5d4thPrize', '5d5thPrize', '5d6thPrize', '6d1stPrize', '6d2nd1Prize', '6d2nd2Prize', '6d3rd1Prize', '6d3rd2Prize', '6d4th1Prize', '6d4th2Prize', '6d5th1Prize', '6d5th2Prize', 'companyId'], 'integer'],
+            [['version', 'status', 'companyId'], 'integer'],
             [['drawDate', 'status', 'companyId'], 'required'],
+            [['1stPrize', '2ndPrize', '3rdPrize', 'special1Prize', 'special2Prize', 'special3Prize', 'special4Prize', 'special5Prize', 'special6Prize', 'special7Prize', 'special8Prize', 'special9Prize', 'special10Prize', 'consolation1Prize', 'consolation2Prize', 'consolation3Prize', 'consolation4Prize', 'consolation5Prize', 'consolation6Prize', 'consolation7Prize', 'consolation8Prize', 'consolation9Prize', 'consolation10Prize', '5d1stPrize', '5d2ndPrize', '5d3rdPrize', '5d4thPrize', '5d5thPrize', '5d6thPrize', '6d1stPrize', '6d2nd1Prize',  '6d2nd2Prize', '6d3rd1Prize', '6d3rd2Prize', '6d4th1Prize', '6d4th2Prize', '6d5th1Prize', '6d5th2Prize'], 'number'],
             [['drawDate', 'drawTime', 'stopBetTime', 'checkResultsDate'], 'safe'],
+            [['1stPrize', '2ndPrize', '3rdPrize', 'special1Prize', 'special2Prize', 'special3Prize', 'special4Prize', 'special5Prize', 'special6Prize', 'special7Prize', 'special8Prize', 'special9Prize', 'special10Prize', 'consolation1Prize', 'consolation2Prize', 'consolation3Prize', 'consolation4Prize', 'consolation5Prize', 'consolation6Prize', 'consolation7Prize', 'consolation8Prize', 'consolation9Prize', 'consolation10Prize'], 'string', 'max' => 4],
+            [['5d1stPrize', '5d2ndPrize', '5d3rdPrize', '5d4thPrize', '5d5thPrize', '5d6thPrize'], 'string', 'max' => 5],
+            [['6d1stPrize', '6d2nd1Prize', '6d2nd2Prize', '6d3rd1Prize', '6d3rd2Prize', '6d4th1Prize', '6d4th2Prize', '6d5th1Prize', '6d5th2Prize'], 'string', 'max' => 6],
             [['companyId'], 'exist', 'skipOnError' => true, 'targetClass' => Company::class, 'targetAttribute' => ['companyId' => 'id']],
         ];
     }
@@ -168,6 +172,19 @@ class CompanyDraw extends \yii\db\ActiveRecord
                 'defaultValue' => 1
             ],
         ];
+    }
+
+    // filter out some fields, best used when you want to inherit the parent implementation
+    // and blacklist some sensitive fields.
+    public function fields()
+    {
+        $fields = parent::fields();
+
+        $fields['company'] = function ($model) {
+            return $model->company;
+        };
+
+        return $fields;
     }
 
     /**

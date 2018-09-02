@@ -10,9 +10,7 @@ use app\models\Company;
 use app\models\Master;
 use app\models\UserDetail;
 use Yii;
-use app\components\dbix\CommonClass;
-use yii\data\ActiveDataProvider;
-use yii\data\ArrayDataProvider;
+use app\components\ccf\CommonClass;
 use yii\db\Query;
 use yii\filters\AccessControl;
 use yii\filters\auth\HttpBearerAuth;
@@ -23,6 +21,7 @@ use yii\helpers\ArrayHelper;
 use yii\helpers\Url;
 use yii\rest\ActiveController;
 use yii\web\ServerErrorHttpException;
+use yii\web\UnprocessableEntityHttpException;
 
 class BetController extends ActiveController
 {
@@ -88,7 +87,7 @@ class BetController extends ActiveController
 
         $behaviors['access'] = [
             'class' => AccessControl::class,
-            'only' => ['index','view','create','update','get-bet-slip-history'],
+            'only' => ['index','view','create','update','get-bet-slip-history','get-bet-number-history','get-void-bet-history','get-voidable-bets','get-voided-bets'],
             'rules' => [
                 [
                     'allow' => true,
@@ -97,7 +96,7 @@ class BetController extends ActiveController
                 ],
                 [
                     'allow' => true,
-                    'actions' => ['view','get-bet-slip-history'],
+                    'actions' => ['view','get-bet-slip-history','get-bet-number-history','get-void-bet-history','get-voidable-bets','get-voided-bets'],
                     'roles' => ['@'],
                 ],
                 [
@@ -234,8 +233,16 @@ class BetController extends ActiveController
         $betModel->packageId = $userDetail->packageId;
         $betModel->masterId = $masterId;
 
+        $own4dCommRate = $betModel->{'4dCommRate'};
+        $extra4dCommRate = $betModel->extra4dCommRate;
         $total4dCommRate = $betModel->{'4dCommRate'}+$betModel->extra4dCommRate;
+
+        $own6dCommRate = $betModel->{'6dCommRate'};
+        $extra6dCommRate = $betModel->extra6dCommRate;
         $total6dCommRate = $betModel->{'6dCommRate'}+$betModel->extra6dCommRate;
+
+        $ownGdCommRate = $betModel->{'gdCommRate'};
+        $extraGdCommRate = $betModel->extraGdCommRate;
         $totalGdCommRate = $betModel->{'gdCommRate'}+$betModel->extraGdCommRate;
 
         $superior4dCommRate = $betModel->superior4dCommRate-$betModel->{'4dCommRate'};
@@ -249,9 +256,7 @@ class BetController extends ActiveController
                 return $betModel;
             }
 
-            $grandTotalSales = 0;
-            $grandTotalCommission = 0;
-            $grandTotalSuperiorCommission = 0;
+            $grandTotalSales = $grandTotalOwnCommission = $grandTotalExtraCommission = $grandTotalCommission = $grandTotalSuperiorCommission = 0;
 
             $i = 0;
             while ($i<count($betFormRowsArray)) {
@@ -302,30 +307,15 @@ class BetController extends ActiveController
                 $bn->{'5d'} = $amount5d;
                 $bn->{'6d'} = $amount6d;
 
-                if (isset($betFormRow[Yii::$app->params['COMPANY']['CODE']['MAGNUM']])) {
-                    $companyCodes[] = Yii::$app->params['COMPANY']['CODE']['MAGNUM'];
+                $companyCodes = [];
+                foreach (Yii::$app->params['COMPANY']['CODE'] as $companyCode) {
+                    if (isset($betFormRow[$companyCode])) {
+                        if (!in_array($companyCode,$companyCodes)) {
+                            $companyCodes[] = $companyCode;
+                        }
+                    }
                 }
-                if (isset($betFormRow[Yii::$app->params['COMPANY']['CODE']['PMP']])) {
-                    $companyCodes[] = Yii::$app->params['COMPANY']['CODE']['PMP'];
-                }
-                if (isset($betFormRow[Yii::$app->params['COMPANY']['CODE']['TOTO']])) {
-                    $companyCodes[] = Yii::$app->params['COMPANY']['CODE']['TOTO'];
-                }
-                if (isset($betFormRow[Yii::$app->params['COMPANY']['CODE']['SINGAPORE']])) {
-                    $companyCodes[] = Yii::$app->params['COMPANY']['CODE']['SINGAPORE'];
-                }
-                if (isset($betFormRow[Yii::$app->params['COMPANY']['CODE']['SABAH']])) {
-                    $companyCodes[] = Yii::$app->params['COMPANY']['CODE']['SABAH'];
-                }
-                if (isset($betFormRow[Yii::$app->params['COMPANY']['CODE']['SANDAKAN']])) {
-                    $companyCodes[] = Yii::$app->params['COMPANY']['CODE']['SANDAKAN'];
-                }
-                if (isset($betFormRow[Yii::$app->params['COMPANY']['CODE']['SARAWAK']])) {
-                    $companyCodes[] = Yii::$app->params['COMPANY']['CODE']['SARAWAK'];
-                }
-                if (isset($betFormRow[Yii::$app->params['COMPANY']['CODE']['GD']])) {
-                    $companyCodes[] = Yii::$app->params['COMPANY']['CODE']['GD'];
-                }
+
                 $bn->companyCodes = $companyCodes;
                 $bn->drawDates = $betFormRow["drawDateArray"];
                 $totalBet = $big+$small+$amount4a+$amount4b+$amount4c+$amount4d+$amount4e+$amount4f;
@@ -334,11 +324,21 @@ class BetController extends ActiveController
                 $bn->totalBet = $totalBet;
                 $bn->betId = $betModel->id;
 
+                $grandTotalSales += $totalBet;
+
                 if (!$bn->save()) {
                     Yii::error($bn->errors);
                     return $bn;
                 }
                 $i++;
+            }
+
+            //Check if user has enough credit to place the bet(s)
+            //Calculate user available credit
+            $creditAvailable = $userDetail->creditLimit - $userDetail->creditGranted + $userDetail->balance - $userDetail->outstandingBet;
+            if ($grandTotalSales > $creditAvailable) {
+                //Reject all the bets
+                throw new UnprocessableEntityHttpException("Bet(s) rejected due to insufficient credit. Only ".$userDetail->creditAvailable." left, please re-adjust your bet(s).");
             }
 
             foreach ($betArray as $bet) {
@@ -370,17 +370,28 @@ class BetController extends ActiveController
                     $number = $betNumber;
                     $resultsArray = self::insertBetDetail($number,$bet,$drawDate,$company->id,$companyCode,$masterId,$betModel->id,$bn->id,
                         $total4dCommRate,$superior4dCommRate,$total6dCommRate,$superior6dCommRate,
-                        $totalGdCommRate,$superiorGdCommRate);
+                        $totalGdCommRate,$superiorGdCommRate,$own4dCommRate,$extra4dCommRate,$own6dCommRate,$extra6dCommRate,
+                        $ownGdCommRate,$extraGdCommRate);
 
-                    $grandTotalSales += $resultsArray["totalSales"];
+                    if ($resultsArray["status"] != Yii::$app->params['BET']['DETAIL']['STATUS']['ACCEPTED']) {
+                        $grandTotalSales -= $resultsArray["totalReject"];
+                    }
+                    $grandTotalOwnCommission += $resultsArray["totalOwnCommission"];
+                    $grandTotalExtraCommission += $resultsArray["totalExtraCommission"];
                     $grandTotalCommission += $resultsArray["totalCommission"];
                     $grandTotalSuperiorCommission += $resultsArray["totalSuperiorCommission"];
                 } else if ($betOption == Yii::$app->params['BET']['NUMBER']['OPTION']['RETURN']) {
                     $number = $betNumber;
                     $resultsArray = self::insertBetDetail($number,$bet,$drawDate,$company->id,$companyCode,$masterId,$betModel->id,$bn->id,
                         $total4dCommRate,$superior4dCommRate,$total6dCommRate,$superior6dCommRate,
-                        $totalGdCommRate,$superiorGdCommRate);
-                    $grandTotalSales += $resultsArray["totalSales"];
+                        $totalGdCommRate,$superiorGdCommRate,$own4dCommRate,$extra4dCommRate,$own6dCommRate,$extra6dCommRate,
+                        $ownGdCommRate,$extraGdCommRate);
+
+                    if ($resultsArray["status"] != Yii::$app->params['BET']['DETAIL']['STATUS']['ACCEPTED']) {
+                        $grandTotalSales -= $resultsArray["totalReject"];
+                    }
+                    $grandTotalOwnCommission += $resultsArray["totalOwnCommission"];
+                    $grandTotalExtraCommission += $resultsArray["totalExtraCommission"];
                     $grandTotalCommission += $resultsArray["totalCommission"];
                     $grandTotalSuperiorCommission += $resultsArray["totalSuperiorCommission"];
 
@@ -388,8 +399,14 @@ class BetController extends ActiveController
                     $number = strrev($betNumber);
                     $resultsArray = self::insertBetDetail($number,$bet,$drawDate,$company->id,$companyCode,$masterId,$betModel->id,$bn->id,
                         $total4dCommRate,$superior4dCommRate,$total6dCommRate,$superior6dCommRate,
-                        $totalGdCommRate,$superiorGdCommRate);
-                    $grandTotalSales += $resultsArray["totalSales"];
+                        $totalGdCommRate,$superiorGdCommRate,$own4dCommRate,$extra4dCommRate,$own6dCommRate,$extra6dCommRate,
+                        $ownGdCommRate,$extraGdCommRate);
+
+                    if ($resultsArray["status"] != Yii::$app->params['BET']['DETAIL']['STATUS']['ACCEPTED']) {
+                        $grandTotalSales -= $resultsArray["totalReject"];
+                    }
+                    $grandTotalOwnCommission += $resultsArray["totalOwnCommission"];
+                    $grandTotalExtraCommission += $resultsArray["totalExtraCommission"];
                     $grandTotalCommission += $resultsArray["totalCommission"];
                     $grandTotalSuperiorCommission += $resultsArray["totalSuperiorCommission"];
                 } else if ($betOption == Yii::$app->params['BET']['NUMBER']['OPTION']['BOX']) {
@@ -398,9 +415,14 @@ class BetController extends ActiveController
                     foreach ($numbers as $number) {
                         $resultsArray = self::insertBetDetail($number,$bet,$drawDate,$company->id,$companyCode,$masterId,$betModel->id,$bn->id,
                             $total4dCommRate,$superior4dCommRate,$total6dCommRate,$superior6dCommRate,
-                            $totalGdCommRate,$superiorGdCommRate);
+                            $totalGdCommRate,$superiorGdCommRate,$own4dCommRate,$extra4dCommRate,$own6dCommRate,$extra6dCommRate,
+                            $ownGdCommRate,$extraGdCommRate);
 
-                        $grandTotalSales += $resultsArray["totalSales"];
+                        if ($resultsArray["status"] != Yii::$app->params['BET']['DETAIL']['STATUS']['ACCEPTED']) {
+                            $grandTotalSales -= $resultsArray["totalReject"];
+                        }
+                        $grandTotalOwnCommission += $resultsArray["totalOwnCommission"];
+                        $grandTotalExtraCommission += $resultsArray["totalExtraCommission"];
                         $grandTotalCommission += $resultsArray["totalCommission"];
                         $grandTotalSuperiorCommission += $resultsArray["totalSuperiorCommission"];
                     }
@@ -410,9 +432,14 @@ class BetController extends ActiveController
                     foreach ($numbers as $number) {
                         $resultsArray = self::insertBetDetail($number, $bet, $drawDate, $company->id, $companyCode, $masterId, $betModel->id,$bn->id,
                             $total4dCommRate, $superior4dCommRate, $total6dCommRate, $superior6dCommRate,
-                            $totalGdCommRate, $superiorGdCommRate, true, count($numbers));
+                            $totalGdCommRate, $superiorGdCommRate,$own4dCommRate,$extra4dCommRate,$own6dCommRate,$extra6dCommRate,
+                            $ownGdCommRate,$extraGdCommRate, true, count($numbers));
 
-                        $grandTotalSales += $resultsArray["totalSales"];
+                        if ($resultsArray["status"] != Yii::$app->params['BET']['DETAIL']['STATUS']['ACCEPTED']) {
+                            $grandTotalSales -= $resultsArray["totalReject"];
+                        }
+                        $grandTotalOwnCommission += $resultsArray["totalOwnCommission"];
+                        $grandTotalExtraCommission += $resultsArray["totalExtraCommission"];
                         $grandTotalCommission += $resultsArray["totalCommission"];
                         $grandTotalSuperiorCommission += $resultsArray["totalSuperiorCommission"];
                     }
@@ -424,37 +451,94 @@ class BetController extends ActiveController
                         $number = $firstDigit.$woFirstDigit;
                         $resultsArray = self::insertBetDetail($number,$bet,$drawDate,$company->id,$companyCode,$masterId,$betModel->id,$bn->id,
                             $total4dCommRate,$superior4dCommRate,$total6dCommRate,$superior6dCommRate,
-                            $totalGdCommRate,$superiorGdCommRate);
+                            $totalGdCommRate,$superiorGdCommRate,$own4dCommRate,$extra4dCommRate,$own6dCommRate,$extra6dCommRate,
+                            $ownGdCommRate,$extraGdCommRate);
 
-                        $grandTotalSales += $resultsArray["totalSales"];
+                        if ($resultsArray["status"] != Yii::$app->params['BET']['DETAIL']['STATUS']['ACCEPTED']) {
+                            $grandTotalSales -= $resultsArray["totalReject"];
+                        }
+                        $grandTotalOwnCommission += $resultsArray["totalOwnCommission"];
+                        $grandTotalExtraCommission += $resultsArray["totalExtraCommission"];
                         $grandTotalCommission += $resultsArray["totalCommission"];
                         $grandTotalSuperiorCommission += $resultsArray["totalSuperiorCommission"];
                     }
                 }
             } //End foreach ($betArray as $bet)
 
+            $grandTotalSales = 0;
             for ($i=0;$i<count($betFormRowsArray);$i++) {
-                $totalSales = null;
-                $totalReject = null;
                 $bn = BetNumber::find()
                     ->where(['betId'=>$betModel->id,'rowIndex'=>$i])
-                    ->with('betDetails')
+                    ->with('betDetails.betDetailReject')
                     ->one();
                 $bds = $bn->betDetails;
+                $totalSales = $bn->totalBet;
+                $companyCodesCount = count($bn->companyCodes);
+                $drawDatesCount = count($bn->drawDates);
+                $totalReject = 0;
+
+                /*$soldBig = $bn->big;
+                $soldSmall = $bn->small;
+                $sold4a  = $bn->{'4a'};
+                $sold4b  = $bn->{'4b'};
+                $sold4c  = $bn->{'4c'};
+                $sold4d  = $bn->{'4d'};
+                $sold4e  = $bn->{'4e'};
+                $sold4f  = $bn->{'4f'};
+                $sold3abc  = $bn->{'3abc'};
+                $sold3a  = $bn->{'3a'};
+                $sold3b  = $bn->{'3b'};
+                $sold3c  = $bn->{'3c'};
+                $sold3d  = $bn->{'3d'};
+                $sold3e  = $bn->{'3e'};
+                $sold5d  = $bn->{'5d'};
+                $sold6d  = $bn->{'6d'};*/
+
+                $soldBig = null;
+                $soldSmall = null;
+                $sold4a  = null;
+                $sold4b  = null;
+                $sold4c  = null;
+                $sold4d  = null;
+                $sold4e  = null;
+                $sold4f  = null;
+                $sold3abc  = null;
+                $sold3a  = null;
+                $sold3b  = null;
+                $sold3c  = null;
+                $sold3d  = null;
+                $sold3e  = null;
+                $sold5d  = null;
+                $sold6d  = null;
 
                 if (!empty($bds) && is_array($bds)) {
                     foreach ($bds as $bd) {
-                        if ($bd->status == Yii::$app->params['BET']['DETAIL']['STATUS']['ACCEPTED']) {
-                            $totalSales += $bd->totalSales;
-                        } else if ($bd->status == Yii::$app->params['BET']['DETAIL']['STATUS']['LIMITED']) {
-                            $totalSales += $bd->totalSales;
+                        if ($bd->status != Yii::$app->params['BET']['DETAIL']['STATUS']['ACCEPTED']) {
+                            $totalSales -= $bd->totalReject;
                             $totalReject += $bd->totalReject;
-                        } else if ($bd->status == Yii::$app->params['BET']['DETAIL']['STATUS']['REJECTED']) {
-                            $totalReject += $bd->totalReject;
+                        }
+
+                        if ($bd->status != Yii::$app->params['BET']['DETAIL']['STATUS']['REJECTED']) {
+                            $soldBig += $bd->big;
+                            $soldSmall += $bd->small;
+                            $sold4a += $bd->{'4a'};
+                            $sold4b += $bd->{'4b'};
+                            $sold4c += $bd->{'4c'};
+                            $sold4d += $bd->{'4d'};
+                            $sold4e += $bd->{'4e'};
+                            $sold4f += $bd->{'4f'};
+                            $sold3abc += $bd->{'3abc'};
+                            $sold3a += $bd->{'3a'};
+                            $sold3b += $bd->{'3b'};
+                            $sold3c += $bd->{'3c'};
+                            $sold3d += $bd->{'3d'};
+                            $sold3e += $bd->{'3e'};
+                            $sold5d += $bd->{'5d'};
+                            $sold6d += $bd->{'6d'};
                         }
                     }
 
-                    if ($totalSales == 0) { //Means the number is totally rejected
+                    if ($totalSales <= 0) { //Means the number is totally rejected
                         $bn->status = Yii::$app->params['BET']['NUMBER']['STATUS']['REJECTED'];
                     } else if ($totalSales > 0 && $totalReject > 0) {
                         $bn->status = Yii::$app->params['BET']['NUMBER']['STATUS']['LIMITED'];
@@ -465,8 +549,47 @@ class BetController extends ActiveController
                     $bn->status = Yii::$app->params['BET']['NUMBER']['STATUS']['REJECTED'];
                 }
 
+                $soldBig = self::adjustSalesBet($soldBig,$bn->big*$companyCodesCount*$drawDatesCount);
+                $soldSmall = self::adjustSalesBet($soldSmall,$bn->small*$companyCodesCount*$drawDatesCount);
+                $sold4a = self::adjustSalesBet($sold4a,$bn->{'4a'}*$companyCodesCount*$drawDatesCount);
+                $sold4b = self::adjustSalesBet($sold4a,$bn->{'4b'}*$companyCodesCount*$drawDatesCount);
+                $sold4c = self::adjustSalesBet($sold4a,$bn->{'4c'}*$companyCodesCount*$drawDatesCount);
+                $sold4d = self::adjustSalesBet($sold4a,$bn->{'4d'}*$companyCodesCount*$drawDatesCount);
+                $sold4e = self::adjustSalesBet($sold4a,$bn->{'4e'}*$companyCodesCount*$drawDatesCount);
+                $sold4f = self::adjustSalesBet($sold4a,$bn->{'4f'}*$companyCodesCount*$drawDatesCount);
+                $sold3abc = self::adjustSalesBet($sold3abc,$bn->{'3abc'}*$companyCodesCount*$drawDatesCount);
+                $sold3a = self::adjustSalesBet($sold3abc,$bn->{'3a'}*$companyCodesCount*$drawDatesCount);
+                $sold3b = self::adjustSalesBet($sold3abc,$bn->{'3b'}*$companyCodesCount*$drawDatesCount);
+                $sold3c = self::adjustSalesBet($sold3abc,$bn->{'3c'}*$companyCodesCount*$drawDatesCount);
+                $sold3d = self::adjustSalesBet($sold3abc,$bn->{'3d'}*$companyCodesCount*$drawDatesCount);
+                $sold3e = self::adjustSalesBet($sold3abc,$bn->{'3e'}*$companyCodesCount*$drawDatesCount);
+                $sold5d = self::adjustSalesBet($sold3abc,$bn->{'5d'}*$companyCodesCount*$drawDatesCount);
+                $sold6d = self::adjustSalesBet($sold3abc,$bn->{'6d'}*$companyCodesCount*$drawDatesCount);
+                
+                $bn->soldBig = $soldBig;
+                $bn->soldSmall = $soldSmall;
+                $bn->sold4a = $sold4a;
+                $bn->sold4b = $sold4b;
+                $bn->sold4c = $sold4c;
+                $bn->sold4d = $sold4d;
+                $bn->sold4e = $sold4e;
+                $bn->sold4f = $sold4f;
+                $bn->sold3abc = $sold3abc;
+                $bn->sold3a = $sold3a;
+                $bn->sold3b = $sold3b;
+                $bn->sold3c = $sold3c;
+                $bn->sold3d = $sold3d;
+                $bn->sold3e = $sold3e;
+                $bn->sold5d = $sold5d;
+                $bn->sold6d = $sold6d;
+
+                $totalSales = $soldBig+$soldSmall+$sold4a+$sold4b+$sold4c+$sold4d+$sold4e+$sold4f;
+                $totalSales += $sold3abc+$sold3a+$sold3b+$sold3c+$sold3d+$sold3e;
+                $totalSales += $sold5d+$sold6d;
+
                 $bn->totalSales = $totalSales;
-                $bn->totalReject = $totalReject;
+                $bn->totalReject = round($bn->totalBet-$totalSales,2);
+                $grandTotalSales += $totalSales;
 
                 if (!$bn->save()) {
                     Yii::error($bn->errors);
@@ -475,14 +598,26 @@ class BetController extends ActiveController
             }
 
             //Update the totalSales and totalCommission columns
+            $grandTotalSales = round($grandTotalSales,2);
             $betModel->totalSales = $grandTotalSales;
-            $betModel->totalCommission = $grandTotalCommission;
+            $betModel->ownCommission = round($grandTotalOwnCommission,2);
+            $betModel->totalCommission = round($grandTotalCommission,2);
             if (Yii::$app->user->identity->userType == Yii::$app->params['USER']['TYPE']['PLAYER']) {
-                $betModel->totalSuperiorCommission = $grandTotalSuperiorCommission;
+                $betModel->extraCommission = round($grandTotalExtraCommission,2);
+                $betModel->totalSuperiorCommission = round($grandTotalSuperiorCommission,2);
             }
             if (!$betModel->save()) {
                 Yii::error($betModel->errors);
                 return $betModel;
+            }
+
+            if ($grandTotalSales > 0) {
+                //Proceed to update the user balance
+                $userDetail->outstandingBet += $grandTotalSales;
+                if (!$userDetail->save()) {
+                    Yii::error($userDetail->errors);
+                    return $userDetail;
+                }
             }
 
             $dbTrans->commit();
@@ -499,14 +634,87 @@ class BetController extends ActiveController
         return $betModel;
     }
 
+    public function actionVoid() {
+        $request = Yii::$app->request;
+        $params = $request->bodyParams;
+
+        $betVoidAllowMinutes = Yii::$app->params['GLOBAL']['BET_VOID_ALLOW_MINUTES'];
+        $master = Master::findOne(['id'=>Yii::$app->user->identity->masterId]);
+        if ($master) {
+            $betVoidAllowMinutes = $master->voidBetMinutes;
+        }
+
+        $voidArray = $params['voidArray']; //Array consists of bet id(s)
+        //Look for voidable bet(s)
+        $bds = BetDetail::find()
+            ->where(['id'=>$voidArray])
+            ->andWhere('date_add(createdAt, interval '.$betVoidAllowMinutes.' minute) > now()')
+            ->all();
+
+        $voidCount = 0;
+        foreach ($bds as $bd) {
+            $bd->status = Yii::$app->params['BET']['DETAIL']['STATUS']['VOIDED'];
+            if (!$bd->save()) {
+                Yii::error($bd->errors);
+                return $bd;
+            }
+            $voidCount++;
+        }
+
+        $betIdCount = count($voidArray);
+        $result = ["betIdCount"=>$betIdCount,"voidCount"=>$voidCount,"betDetailIdArray"=>$voidArray];
+
+        return $result;
+    }
+
+    //Get voidable bets (based on the global params BET_VOID_ALLOW_MINUTES)
+    public function actionGetVoidableBets() {
+        $request = Yii::$app->request;
+        $params = $request->get();
+
+        $betVoidAllowMinutes = Yii::$app->params['GLOBAL']['BET_VOID_ALLOW_MINUTES'];
+        $master = Master::findOne(['id'=>Yii::$app->user->identity->masterId]);
+        if ($master) {
+            $betVoidAllowMinutes = $master->voidBetMinutes;
+        }
+
+        $bds = BetDetail::find()
+            ->with(['companyDraw.company'])
+            ->where(['status'=>[Yii::$app->params['BET']['DETAIL']['STATUS']['ACCEPTED'],Yii::$app->params['BET']['DETAIL']['STATUS']['LIMITED']]])
+            ->andWhere(['createdBy'=>Yii::$app->user->identity->getId()])
+            ->andWhere('date_add(createdAt, interval '.$betVoidAllowMinutes.' minute) > now()')
+            ->asArray()
+            ->all();
+
+        return $bds;
+    }
+
+    public function actionGetVoidedBets() {
+        $request = Yii::$app->request;
+        $params = $request->bodyParams;
+
+        $betDetailIdArray = $params['betDetailIdArray'] ?? null;
+
+        $bds = BetDetail::find()
+            ->with(['companyDraw.company'])
+            ->where(['status'=>Yii::$app->params['BET']['DETAIL']['STATUS']['VOIDED']])
+            ->andWhere(['createdBy'=>Yii::$app->user->identity->getId()]);
+        if (!empty($betDetailIdArray)) {
+            $bds = $bds->andWhere(['id'=>$betDetailIdArray]);
+        }
+        $bds = $bds->asArray()->all();
+
+        return $bds;
+    }
+
     public function actionGetBetSlipHistory() {
         $request = Yii::$app->request;
         $params = $request->get();
 
         $drawDateStart = !empty($params["drawDateStart"]) ? Date('Y-m-d 00:00:00', strtotime($params["drawDateStart"])) : null;
-        $drawDateEnd = !empty($params["drawDateEnd"]) ? Date('Y-m-d 00:00:00', strtotime($params["drawDateEnd"])) : null;
+        $drawDateEnd = !empty($params["drawDateEnd"]) ? Date('Y-m-d 23:59:59', strtotime($params["drawDateEnd"])) : null;
         $betDateStart = !empty($params["betDateStart"]) ? Date('Y-m-d 00:00:00', strtotime($params["betDateStart"])) : null;
-        $betDateEnd = !empty($params["betDateEnd"]) ? Date('Y-m-d 00:00:00', strtotime($params["betDateEnd"])) : null;
+        $betDateEnd = !empty($params["betDateEnd"]) ? Date('Y-m-d 23:59:59', strtotime($params["betDateEnd"])) : null;
 
         $createdByArray = $params["createdByArray"] ?? [];
         if (Yii::$app->user->identity->userType == Yii::$app->params['USER']['TYPE']['AGENT']) {
@@ -546,9 +754,102 @@ class BetController extends ActiveController
         return $result;
     }
 
+    public function actionGetBetNumberHistory() {
+        $request = Yii::$app->request;
+        $params = $request->get();
+
+        $drawDateStart = !empty($params["drawDateStart"]) ? Date('Y-m-d 00:00:00', strtotime($params["drawDateStart"])) : null;
+        $drawDateEnd = !empty($params["drawDateEnd"]) ? Date('Y-m-d 23:59:59', strtotime($params["drawDateEnd"])) : null;
+        $betDateStart = !empty($params["betDateStart"]) ? Date('Y-m-d 00:00:00', strtotime($params["betDateStart"])) : null;
+        $betDateEnd = !empty($params["betDateEnd"]) ? Date('Y-m-d 23:59:59', strtotime($params["betDateEnd"])) : null;
+        $number = $params["number"] ?? null;
+
+        $createdByArray = $params["createdByArray"] ?? [];
+        if (Yii::$app->user->identity->userType == Yii::$app->params['USER']['TYPE']['AGENT']) {
+            $createdByArray[] = Yii::$app->user->identity->getId();
+            $players = Yii::$app->user->identity->players;
+            foreach ($players as $player) {
+                $createdByArray[] = $player->id;
+            }
+        } else if (Yii::$app->user->identity->userType == Yii::$app->params['USER']['TYPE']['PLAYER']) {
+            $createdByArray[] = Yii::$app->user->identity->getId();
+        }
+
+        $bds = BetDetail::find()
+            ->with(['creator','companyDraw.company'])
+            ->where(['createdBy'=>$createdByArray]);
+        if (!empty($drawDateStart) && !empty($drawDateEnd)) {
+            $bds = $bds->andWhere(['between','drawDate',$drawDateStart,$drawDateEnd]);
+        }
+        if (!empty($betDateStart) && !empty($betDateEnd)) {
+            $bds = $bds->andWhere(['between','createdAt',$betDateStart,$betDateEnd]);
+        }
+        if (!empty($number)) {
+            $bds = $bds->andWhere(['number'=>$number]);
+        }
+        $bds = $bds->all();
+
+        $result = [];
+        for ($i=0;$i<count($bds);$i++) {
+            $result[$i] = ArrayHelper::toArray($bds[$i]);
+            $result[$i]["creator"] = $bds[$i]->creator;
+            $result[$i]["companyDraw"] = $bds[$i]->companyDraw;
+        }
+
+        return $result;
+    }
+
+    public function actionGetVoidBetHistory() {
+        $request = Yii::$app->request;
+        $params = $request->get();
+
+        $drawDateStart = !empty($params["drawDateStart"]) ? Date('Y-m-d 00:00:00', strtotime($params["drawDateStart"])) : null;
+        $drawDateEnd = !empty($params["drawDateEnd"]) ? Date('Y-m-d 23:59:59', strtotime($params["drawDateEnd"])) : null;
+        $betDateStart = !empty($params["betDateStart"]) ? Date('Y-m-d 00:00:00', strtotime($params["betDateStart"])) : null;
+        $betDateEnd = !empty($params["betDateEnd"]) ? Date('Y-m-d 23:59:59', strtotime($params["betDateEnd"])) : null;
+        $number = $params["number"] ?? null;
+
+        $createdByArray = $params["createdByArray"] ?? [];
+        if (Yii::$app->user->identity->userType == Yii::$app->params['USER']['TYPE']['AGENT']) {
+            $createdByArray[] = Yii::$app->user->identity->getId();
+            $players = Yii::$app->user->identity->players;
+            foreach ($players as $player) {
+                $createdByArray[] = $player->id;
+            }
+        } else if (Yii::$app->user->identity->userType == Yii::$app->params['USER']['TYPE']['PLAYER']) {
+            $createdByArray[] = Yii::$app->user->identity->getId();
+        }
+
+        $bds = BetDetail::find()
+            ->with(['creator','companyDraw.company'])
+            ->where(['createdBy'=>$createdByArray,'status'=>Yii::$app->params['BET']['DETAIL']['STATUS']['VOIDED']]);
+        if (!empty($drawDateStart) && !empty($drawDateEnd)) {
+            $bds = $bds->andWhere(['between','drawDate',$drawDateStart,$drawDateEnd]);
+        }
+        if (!empty($betDateStart) && !empty($betDateEnd)) {
+            $bds = $bds->andWhere(['between','createdAt',$betDateStart,$betDateEnd]);
+        }
+        if (!empty($number)) {
+            $bds = $bds->andWhere(['number'=>$number]);
+        }
+        $bds = $bds->all();
+
+        $result = [];
+        for ($i=0;$i<count($bds);$i++) {
+            $result[$i] = ArrayHelper::toArray($bds[$i]);
+            $result[$i]["creator"] = $bds[$i]->creator;
+            $result[$i]["companyDraw"] = $bds[$i]->companyDraw;
+        }
+
+        return $result;
+    }
+
     private function insertBetDetail($number,$bet,$drawDate,$companyId,$companyCode,$masterId,$betModelId,$betNumberId,
                                      $total4dCommRate,$superior4dCommRate,$total6dCommRate,$superior6dCommRate,
-                                     $totalGdCommRate,$superiorGdCommRate,$isIBox = false,$iBoxNumbersCount = null) {
+                                     $totalGdCommRate,$superiorGdCommRate,
+                                     $own4dCommRate,$extra4dCommRate,$own6dCommRate,$extra6dCommRate,
+                                     $ownGdCommRate,$extraGdCommRate,
+                                     $isIBox = false,$iBoxNumbersCount = null) {
         $balanceArray = CommonClass::getAvailableBalance($number,$drawDate,$companyId,$masterId);
 
         $big = $bet["big"] ?? null;
@@ -700,6 +1001,11 @@ class BetController extends ActiveController
             $status = Yii::$app->params['BET']['DETAIL']['STATUS']['ACCEPTED']; //All bets accepted
         }
 
+        $total4dSales = $big+$small+$amount4a+$amount4b+$amount4c+$amount4d+$amount4e+$amount4f;
+        $total4dSales += $amount3abc+$amount3a+$amount3b+$amount3c+$amount3d+$amount3e;
+        $total6dSales = $amount5d+$amount6d;
+        $totalSales = $total4dSales+$total6dSales;
+
         $bd = new BetDetail();
         $bd->number = $number;
         $bd->status = $status;
@@ -720,46 +1026,59 @@ class BetController extends ActiveController
         $bd->{'5d'} = $amount5d;
         $bd->{'6d'} = $amount6d;
 
-        $total4dSales = $big+$small+$amount4a+$amount4b+$amount4c+$amount4d+$amount4e+$amount4f;
-        $total4dSales += $amount3abc+$amount3a+$amount3b+$amount3c+$amount3d+$amount3e;
-        $total6dSales = $amount5d+$amount6d;
-        $totalSales = $total4dSales+$total6dSales;
-
+        $total4dOwnCommission = 0;
+        $total4dExtraCommission = 0;
         $total4dCommission = 0;
         $total4dSuperiorCommission = 0;
         if ($total4dSales > 0) {
             if ($companyCode == Yii::$app->params['COMPANY']['CODE']['GD']) {
-                $total4dCommission = round($total4dSales*$totalGdCommRate/100,2);
+                $total4dOwnCommission = round($total4dSales*$ownGdCommRate/100,3);
+                $total4dExtraCommission = $extraGdCommRate > 0 ? round($total4dSales*$extraGdCommRate/100,3) : null;
+                $total4dCommission = $total4dOwnCommission+$total4dExtraCommission;
+                //$total4dCommission = round($total4dSales*$totalGdCommRate/100,2);
                 if ($superiorGdCommRate > 0) {
-                    $total4dSuperiorCommission = round($total4dSales * $superiorGdCommRate/100,2);
+                    $total4dSuperiorCommission = round($total4dSales * $superiorGdCommRate/100,3);
                 }
             } else {
-                $total4dCommission = round($total4dSales*$total4dCommRate/100,2);
+                $total4dOwnCommission = round($total4dSales*$own4dCommRate/100,3);
+                $total4dExtraCommission = $extra4dCommRate > 0 ? round($total4dSales*$extra4dCommRate/100,3) : null;
+                $total4dCommission = $total4dOwnCommission+$total4dExtraCommission;
+                //$total4dCommission = round($total4dSales*$total4dCommRate/100,2);
                 if ($superior4dCommRate > 0) {
-                    $total4dSuperiorCommission = round($total4dSales * $superior4dCommRate / 100, 2);
+                    $total4dSuperiorCommission = round($total4dSales * $superior4dCommRate / 100, 3);
                 }
             }
         }
 
+        $total6dOwnCommission = 0;
+        $total6dExtraCommission = 0;
         $total6dCommission = 0;
         $total6dSuperiorCommission = 0;
         if ($total6dSales > 0) {
-            $total6dCommission = round($total6dSales*$total6dCommRate/100,2);
+            $total6dOwnCommission = round($total6dSales*$own6dCommRate/100,3);
+            $total6dExtraCommission = $extra6dCommRate > 0 ? round($total6dSales*$extra6dCommRate/100,3) : null;
+            $total6dCommission = $total6dOwnCommission+$total6dExtraCommission;
+            //$total6dCommission = round($total6dSales*$total6dCommRate/100,2);
             if ($superior6dCommRate > 0) {
-                $total6dSuperiorCommission = round($total6dSales * $superior6dCommRate / 100, 2);
+                $total6dSuperiorCommission = round($total6dSales * $superior6dCommRate / 100, 3);
             }
         }
+        $totalOwnCommission = $total4dOwnCommission+$total6dOwnCommission;
+        $totalExtraCommission = $total4dExtraCommission+$total6dExtraCommission;
         $totalCommission = $total4dCommission+$total6dCommission;
         $totalSuperiorCommission = $total4dSuperiorCommission+$total6dSuperiorCommission;
 
         $bd->totalSales = $totalSales;
+        $totalReject = 0;
         if ($status != Yii::$app->params['BET']['DETAIL']['STATUS']['ACCEPTED']) {
             $totalReject = $rejectBig+$rejectSmall+$reject4a+$reject4b+$reject4c+$reject4e+$reject4e+$reject4f;
             $totalReject += $reject3abc+$reject3a+$reject3b+$reject3c+$reject3d+$reject3e+$reject5d+$reject6d;
             $bd->totalReject = $totalReject;
         }
+        $bd->ownCommission = $totalOwnCommission;
         $bd->totalCommission = $totalCommission;
         if (Yii::$app->user->identity->userType == Yii::$app->params['USER']['TYPE']['PLAYER']) {
+            $bd->extraCommission = $totalExtraCommission;
             $bd->totalSuperiorCommission = $totalSuperiorCommission;
         }
         $bd->drawDate = $drawDate->format('Y-m-d');
@@ -791,7 +1110,6 @@ class BetController extends ActiveController
             $bdr->{'5d'} = $reject5d;
             $bdr->{'6d'} = $reject6d;
 
-
             $bdr->totalReject = $totalReject;
             $bdr->betDetailId = $bd->id;
             if (!$bdr->save()) {
@@ -800,7 +1118,7 @@ class BetController extends ActiveController
             }
         }
 
-        return array('totalSales'=>$totalSales,'totalCommission'=>$totalCommission,'totalSuperiorCommission'=>$totalSuperiorCommission);
+        return array('status'=>$status,'totalSales'=>$totalSales,'totalReject'=>$totalReject,'totalOwnCommission'=>$totalOwnCommission,'totalExtraCommission'=>$totalExtraCommission,'totalCommission'=>$totalCommission,'totalSuperiorCommission'=>$totalSuperiorCommission);
     }
 
     /**
@@ -840,5 +1158,16 @@ class BetController extends ActiveController
         $charArray[$i] = $charArray[$j];
         $charArray[$j] = $temp;
         return implode($charArray);
+    }
+
+    /*
+     * If it falls under acceptable error, set it to be bet amount so it will be consistent with the bet amount
+     */
+    private function adjustSalesBet($sales,$bet) {
+        $sales = round($sales,2);
+        if (abs($sales-$bet) <= Yii::$app->params['GLOBAL']['BET_AMOUNT_ACCEPTABLE_ERROR_CENTS']) {
+            $sales = $bet;
+        }
+        return $sales;
     }
 }

@@ -13,7 +13,9 @@ use yii\db\Expression;
  *
  * @property int $id
  * @property int $version
+ * @property string $betAmount
  * @property int $winPrizeType
+ * @property string $winPrizeAmount
  * @property string $totalWin
  * @property int $betDetailId
  * @property int $createdBy
@@ -40,8 +42,8 @@ class BetDetailWin extends \yii\db\ActiveRecord
     {
         return [
             [['version', 'winPrizeType', 'betDetailId'], 'integer'],
-            [['winPrizeType', 'totalWin', 'betDetailId'], 'required'],
-            [['totalWin'], 'number'],
+            [['betAmount', 'winPrizeType', 'winPrizeAmount', 'totalWin', 'betDetailId'], 'required'],
+            [['betAmount', 'winPrizeAmount', 'totalWin'], 'number'],
             [['betDetailId'], 'exist', 'skipOnError' => true, 'targetClass' => BetDetail::class, 'targetAttribute' => ['betDetailId' => 'id']]
         ];
     }
@@ -54,7 +56,9 @@ class BetDetailWin extends \yii\db\ActiveRecord
         return [
             'id' => 'ID',
             'version' => 'Version',
+            'betAmount' => 'Bet Amount',
             'winPrizeType' => 'Win Prize Type',
+            'winPrizeAmount' => 'Win Prize Amount',
             'totalWin' => 'Total Win',
             'betDetailId' => 'Bet Detail ID',
             'createdBy' => 'Created By',

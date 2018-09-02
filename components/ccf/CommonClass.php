@@ -1,6 +1,6 @@
 <?php
 
-namespace app\components\dbix;
+namespace app\components\ccf;
 
 use app\models\Company;
 use app\models\CompanyDraw;

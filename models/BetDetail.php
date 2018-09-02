@@ -13,7 +13,7 @@ use yii\db\Expression;
  *
  * @property int $id
  * @property int $version
- * @property int $number
+ * @property string $number
  * @property string $big
  * @property string $small
  * @property string $4a
@@ -32,11 +32,14 @@ use yii\db\Expression;
  * @property string $6d
  * @property string $totalSales
  * @property string $totalReject
+ * @property string $ownCommission
+ * @property string $extraCommission
  * @property string $totalCommission
  * @property string $totalWin
  * @property string $totalCollect
  * @property string $totalSuperiorCommission
  * @property int $status
+ * @property int $won
  * @property string $voidDate
  * @property string $remarks
  * @property string $drawDate
@@ -51,8 +54,9 @@ use yii\db\Expression;
  * @property CompanyDraw $companyDraw
  * @property BetNumber $betNumber
  * @property Bet $bet
- * @property BetDetailReject[] $betDetailRejects
+ * @property BetDetailReject $betDetailReject
  * @property BetDetailWin[] $betDetailWins
+ * @property User $creator
  */
 class BetDetail extends \yii\db\ActiveRecord
 {
@@ -70,13 +74,14 @@ class BetDetail extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['version', 'number', 'status', 'companyDrawId', 'betNumberId', 'betId'], 'integer'],
-            [['number', 'totalSales', 'totalCommission', 'status', 'drawDate', 'companyDrawId', 'betNumberId', 'betId'], 'required'],
-            [['big', 'small', '4a', '4b', '4c', '4d', '4e', '4f', '3abc', '3a', '3b', '3c', '3d', '3e', '5d', '6d', 'totalSales', 'totalReject', 'totalCommission', 'totalWin', 'totalCollect', 'totalSuperiorCommission'], 'number'],
+            [['version', 'status', 'won', 'companyDrawId', 'betNumberId', 'betId'], 'integer'],
+            [['number', 'totalSales', 'ownCommission', 'totalCommission', 'status', 'drawDate', 'companyDrawId', 'betNumberId', 'betId'], 'required'],
+            [['number', 'big', 'small', '4a', '4b', '4c', '4d', '4e', '4f', '3abc', '3a', '3b', '3c', '3d', '3e', '5d', '6d', 'totalSales', 'totalReject', 'ownCommission', 'extraCommission', 'totalCommission', 'totalWin', 'totalCollect', 'totalSuperiorCommission'], 'number'],
             [['voidDate', 'drawDate'], 'safe'],
+            [['number'], 'string', 'max' => 6],
             [['remarks'], 'string', 'max' => 255],
             [['companyDrawId'], 'exist', 'skipOnError' => true, 'targetClass' => CompanyDraw::class, 'targetAttribute' => ['companyDrawId' => 'id']],
-            [['betNumberId'], 'exist', 'skipOnError' => true, 'targetClass' => BetNumber::className(), 'targetAttribute' => ['betNumberId' => 'id']],
+            [['betNumberId'], 'exist', 'skipOnError' => true, 'targetClass' => BetNumber::class, 'targetAttribute' => ['betNumberId' => 'id']],
             [['betId'], 'exist', 'skipOnError' => true, 'targetClass' => Bet::class, 'targetAttribute' => ['betId' => 'id']]
         ];
     }
@@ -108,11 +113,14 @@ class BetDetail extends \yii\db\ActiveRecord
             '6d' => '6d',
             'totalSales' => 'Total Sales',
             'totalReject' => 'Total Reject',
+            'ownCommission' => 'Own Commission',
+            'extraCommission' => 'Extra Commission',
             'totalCommission' => 'Total Commission',
             'totalWin' => 'Total Win',
             'totalCollect' => 'Total Collect',
             'totalSuperiorCommission' => 'Total Superior Commission',
             'status' => 'Status',
+            'won' => 'Won',
             'voidDate' => 'Void Date',
             'remarks' => 'Remarks',
             'drawDate' => 'Draw Date',
@@ -147,6 +155,79 @@ class BetDetail extends \yii\db\ActiveRecord
         ];
     }
 
+    // filter out some fields, best used when you want to inherit the parent implementation
+    // and blacklist some sensitive fields.
+    public function fields()
+    {
+        $fields = parent::fields();
+
+        $fields['totalSales'] = function ($model) {
+            return floatval($model->totalSales); //Cast string to float/double type
+        };
+
+        $fields['totalReject'] = function ($model) {
+            return floatval($model->totalWin); //Cast string to float/double type
+        };
+
+        $fields['totalCommission'] = function ($model) {
+            return floatval($model->totalCommission); //Cast string to float/double type
+        };
+
+        $fields['totalWin'] = function ($model) {
+            return floatval($model->totalWin); //Cast string to float/double type
+        };
+
+        $fields['totalCollect'] = function ($model) {
+            return floatval($model->totalCollect); //Cast string to float/double type
+        };
+
+        $fields['totalSuperiorCommission'] = function ($model) {
+            return floatval($model->totalSuperiorCommission); //Cast string to float/double type
+        };
+
+        $fields['betDate'] = function ($model) {
+            $betDate = new \DateTime($model->createdAt);
+            return $betDate->format(Yii::$app->params['FORMAT']['DATETIME']);
+        };
+
+        $fields['drawDate'] = function ($model) {
+            $drawDate = new \DateTime($model->drawDate);
+            return $drawDate->format(Yii::$app->params['FORMAT']['DATE']);
+        };
+
+        $fields['voidDate'] = function ($model) {
+            $voidDate = new \DateTime($model->voidDate);
+            return $voidDate->format(Yii::$app->params['FORMAT']['DATETIME']);
+        };
+
+        $fields['voidDateBy'] = function ($model) {
+            $createdAt = new \DateTime($model->createdAt);
+            $voidDateBy = $createdAt->add(new \DateInterval('PT'.Yii::$app->params['GLOBAL']['BET_VOID_ALLOW_MINUTES'].'M'));
+            return $voidDateBy;
+        };
+
+        return $fields;
+    }
+
+    public function extraFields()
+    {
+        $extraFields = parent::extraFields();
+
+        $extraFields['companyDraw'] = function ($model) {
+            return $model->companyDraw;
+        };
+
+        $extraFields['betDetailReject'] = function ($model) {
+            return $model->betDetailReject;
+        };
+
+        $extraFields['betDetailWins'] = function ($model) {
+            return $model->betDetailWins;
+        };
+
+        return $extraFields;
+    }
+
     /**
      * @return \yii\db\ActiveQuery
      */
@@ -171,9 +252,9 @@ class BetDetail extends \yii\db\ActiveRecord
     /**
      * @return \yii\db\ActiveQuery
      */
-    public function getBetDetailRejects()
+    public function getBetDetailReject()
     {
-        return $this->hasMany(BetDetailReject::class, ['betDetailId' => 'id']);
+        return $this->hasOne(BetDetailReject::class, ['betDetailId' => 'id']);
     }
 
     /**
@@ -182,5 +263,13 @@ class BetDetail extends \yii\db\ActiveRecord
     public function getBetDetailWins()
     {
         return $this->hasMany(BetDetailWin::class, ['betDetailId' => 'id']);
+    }
+
+    /**
+     * @return \yii\db\ActiveQuery
+     */
+    public function getCreator()
+    {
+        return $this->hasOne(User::class, ['id' => 'createdBy']);
     }
 }

@@ -185,7 +185,15 @@ $config = [
                     'pluralize' => URL_PLURALIZE,
                     'extraPatterns' => [
                         'GET get-bet-slip-history' => 'get-bet-slip-history',
-                        'OPTIONS get-bet-slip-history' => 'options'
+                        'OPTIONS get-bet-slip-history' => 'options',
+                        'GET get-bet-number-history' => 'get-bet-number-history',
+                        'OPTIONS get-bet-number-history' => 'options',
+                        'GET get-void-bet-history' => 'get-void-bet-history',
+                        'OPTIONS get-void-bet-history' => 'options',
+                        'GET get-voidable-bets' => 'get-voidable-bets',
+                        'OPTIONS get-voidable-bets' => 'options',
+                        'GET get-voided-bets' => 'get-voided-bets',
+                        'OPTIONS get-voided-bets' => 'options'
                     ]
                 ],
                 [

@@ -353,6 +353,14 @@ class User extends ActiveRecord implements IdentityInterface
     /**
      * @return \yii\db\ActiveQuery
      */
+    public function getAgent() //Get upline agent
+    {
+        return $this->hasOne(User::class, ['id' => 'agentId']);
+    }
+
+    /**
+     * @return \yii\db\ActiveQuery
+     */
     public function getPlayers() //Get players under the agent
     {
         return $this->hasMany(User::class, ['agentId' => 'id']);

@@ -14,7 +14,7 @@ use yii\db\Expression;
  * @property int $id
  * @property int $version
  * @property int $rowIndex
- * @property int $number
+ * @property string $number
  * @property int $betOption
  * @property int $status
  * @property string $big
@@ -33,6 +33,22 @@ use yii\db\Expression;
  * @property string $3e
  * @property string $5d
  * @property string $6d
+ * @property string $soldBig
+ * @property string $soldSmall
+ * @property string $sold4a
+ * @property string $sold4b
+ * @property string $sold4c
+ * @property string $sold4d
+ * @property string $sold4e
+ * @property string $sold4f
+ * @property string $sold3abc
+ * @property string $sold3a
+ * @property string $sold3b
+ * @property string $sold3c
+ * @property string $sold3d
+ * @property string $sold3e
+ * @property string $sold5d
+ * @property string $sold6d
  * @property array $companyCodes
  * @property array $drawDates
  * @property string $totalBet
@@ -63,11 +79,12 @@ class BetNumber extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['version', 'rowIndex', 'number', 'betOption', 'status', 'betId'], 'integer'],
+            [['version', 'rowIndex', 'betOption', 'status', 'betId'], 'integer'],
             [['rowIndex', 'number', 'betOption', 'status', 'companyCodes', 'drawDates', 'totalBet', 'betId'], 'required'],
-            [['big', 'small', '4a', '4b', '4c', '4d', '4e', '4f', '3abc', '3a', '3b', '3c', '3d', '3e', '5d', '6d', 'totalBet', 'totalSales', 'totalReject'], 'number'],
+            [['number', 'big', 'small', '4a', '4b', '4c', '4d', '4e', '4f', '3abc', '3a', '3b', '3c', '3d', '3e', '5d', '6d', 'soldBig', 'soldSmall', 'sold4a', 'sold4b', 'sold4c', 'sold4d', 'sold4e', 'sold4f', 'sold3abc', 'sold3a', 'sold3b', 'sold3c', 'sold3d', 'sold3e', 'sold5d', 'sold6d', 'totalBet', 'totalSales', 'totalReject'], 'number'],
             [['companyCodes', 'drawDates'], 'safe'],
-            [['betId'], 'exist', 'skipOnError' => true, 'targetClass' => Bet::class, 'targetAttribute' => ['betId' => 'id']]
+            [['number'], 'string', 'max' => 6],
+            [['betId'], 'exist', 'skipOnError' => true, 'targetClass' => Bet::class, 'targetAttribute' => ['betId' => 'id']],
         ];
     }
 
@@ -99,6 +116,22 @@ class BetNumber extends \yii\db\ActiveRecord
             '3e' => '3e',
             '5d' => '5d',
             '6d' => '6d',
+            'soldBig' => 'Sold Big',
+            'soldSmall' => 'Sold Small',
+            'sold4a' => 'Sold4a',
+            'sold4b' => 'Sold4b',
+            'sold4c' => 'Sold4c',
+            'sold4d' => 'Sold4d',
+            'sold4e' => 'Sold4e',
+            'sold4f' => 'Sold4f',
+            'sold3abc' => 'Sold3abc',
+            'sold3a' => 'Sold3a',
+            'sold3b' => 'Sold3b',
+            'sold3c' => 'Sold3c',
+            'sold3d' => 'Sold3d',
+            'sold3e' => 'Sold3e',
+            'sold5d' => 'Sold5d',
+            'sold6d' => 'Sold6d',
             'companyCodes' => 'Company Codes',
             'drawDates' => 'Draw Dates',
             'totalBet' => 'Total Bet',
