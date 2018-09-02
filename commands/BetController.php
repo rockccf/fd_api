@@ -829,6 +829,7 @@ class BetController extends Controller
             //Update user balance and outstanding bet
             $ud = UserDetail::findOne(['userId'=>$bet->createdBy]);
             $ud->outstandingBet -= $bet->totalSales;
+            $ud->balance -= $bet->totalSales;
             if ($grandTotalWin > 0) {
                 $ud->balance += $grandTotalWin;
             }

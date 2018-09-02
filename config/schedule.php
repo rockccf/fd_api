@@ -9,3 +9,6 @@
 $schedule->command('bet')->dailyAt('20:00');
 $schedule->command('bet')->dailyAt('20:15');
 $schedule->command('bet')->dailyAt('20:30');
+
+// Schedule weekly job for specific day (0-6) and time...
+$schedule->command('admin/reset-user-balance')->weeklyOn(1, '1:00');
