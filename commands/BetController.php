@@ -596,11 +596,17 @@ class BetController extends Controller
     private function processResults($drawDate) {
         //Proceed to scan the bets to see if they are won or lost
         $btStatusArray = array(Yii::$app->params['BET']['DETAIL']['STATUS']['ACCEPTED'],Yii::$app->params['BET']['DETAIL']['STATUS']['LIMITED']);
+
         $bets = Bet::find()
-            ->innerJoinWith('betDetails')
+            ->innerJoinWith([
+                'betDetails' => function ($query) use ($drawDate,$btStatusArray) {
+                    $query->andWhere(['bet_detail.drawDate'=>$drawDate,'bet_detail.status'=>$btStatusArray,'bet_detail.won'=>null]);
+                },
+            ])
             ->where(['bet.status'=>Yii::$app->params['BET']['STATUS']['NEW']])
-            ->andWhere(['bet_detail.drawDate'=>$drawDate,'bet_detail.status'=>$btStatusArray])
-            ->with(['betDetails.companyDraw'])
+            ->with([
+                'betDetails.companyDraw'
+            ])
             ->all();
 
         foreach ($bets as $bet) {
