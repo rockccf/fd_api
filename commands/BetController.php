@@ -1,6 +1,7 @@
 <?php
 namespace app\commands;
 
+use app\components\ccf\CommonClass;
 use app\models\Bet;
 use app\models\BetDetail;
 use app\models\BetDetailWin;
@@ -19,7 +20,7 @@ use yii\web\ServerErrorHttpException;
 class BetController extends Controller
 {
     //Use web scraper to get the company draw results
-    public function actionIndex() {
+    public function actionIndex($drawDate = null) {
         $client = new Client();
 
         /*
@@ -51,6 +52,21 @@ class BetController extends Controller
             }
         }*/
 
+        if (empty($drawDate)) {
+            $drawDate = new \DateTime();
+        } else {
+            $drawDate = new \DateTime($drawDate);
+        }
+        $drawDate->setTime(0,0);
+        $today = new \DateTime();
+        Yii::info("commands\BetController starts, today = ".$today->format('Y-m-d').", drawDate = ".$drawDate->format('Y-m-d'));
+
+        $companyDraws = CompanyDraw::findAll(['status'=>Yii::$app->params['COMPANY']['DRAW']['STATUS']['NEW'],'drawDate'=>$drawDate->format('Y-m-d')]);
+        if (empty($companyDraws) || count($companyDraws) <= 0) {
+            Yii::error("No available company draws.");
+            return ExitCode::SOFTWARE;
+        }
+
         $magnumArray["code"] = Yii::$app->params['COMPANY']['CODE']['MAGNUM'];
         $pmpArray["code"] = Yii::$app->params['COMPANY']['CODE']['PMP'];
         $totoArray["code"] = Yii::$app->params['COMPANY']['CODE']['TOTO'];
@@ -58,6 +74,67 @@ class BetController extends Controller
         $sabahArray["code"] = Yii::$app->params['COMPANY']['CODE']['SABAH'];
         $sandakanArray["code"] = Yii::$app->params['COMPANY']['CODE']['SANDAKAN'];
         $sarawakArray["code"] = Yii::$app->params['COMPANY']['CODE']['SARAWAK'];
+
+        $dates = $crawler->filter('b.f_16'); //Draw dates for all the companies except 5d/6d
+        $i = 0;
+        foreach ($dates as $dateObj) {
+            $value = trim($dateObj->nodeValue);
+            $value = preg_replace('/\xc2\xa0/','',$value); //Replace non breaking space
+            $value = preg_replace('/[\s\+]/', '', $value); //Replace plus sign
+            $value = substr($value,-10);
+            if (empty($value)) {
+                Yii::error("dateObj, value is empty. i = $i");
+                return ExitCode::SOFTWARE;
+            }
+            if (!CommonClass::validateDate($value)) {
+                Yii::error("dateObj, invalid date. i = $i, value = $value");
+                continue;
+            }
+            $date = \DateTime::createFromFormat('d/m/Y', $value);
+            $date->setTime(0,0);
+            if ($date != $drawDate) {
+                Yii::error("dateObj, date is not the same as drawDate. i = $i, value = $value");
+                return ExitCode::SOFTWARE;
+            }
+
+            $i++;
+        }
+        //Make sure there are 9 dates found
+        if ($i != 9) {
+            Yii::error("dates, $i dates found.");
+            return ExitCode::SOFTWARE;
+        }
+
+        $sixdDate = $crawler->filter('td.resultdrawdate'); //Draw date for toto 5d/6d
+        $i = 0;
+        foreach ($sixdDate as $sixdDateObj) {
+            $value = trim($sixdDateObj->nodeValue);
+            $value = preg_replace('/\xc2\xa0/','',$value); //Replace non breaking space
+            $value = preg_replace('/[\s\+]/', '', $value); //Replace plus sign
+            $value = substr($value,-10);
+            if (empty($value)) {
+                Yii::error("sixdDateObj, value is empty. i = $i");
+                return ExitCode::SOFTWARE;
+            }
+            if (!CommonClass::validateDate($value)) {
+                Yii::error("sixdDateObj, invalid date. i = $i, value = $value");
+                continue;
+            }
+            $date = \DateTime::createFromFormat('d/m/Y', $value);
+            $date->setTime(0,0);
+            if ($date != $drawDate) {
+                Yii::error("sixdDateObj, date is not the same as drawDate. i = $i, value = $value");
+                return ExitCode::SOFTWARE;
+            }
+            $i++;
+        }
+        //Make sure there's 1 date found
+        if ($i != 1) {
+            Yii::error("sixdDate, $i dates found.");
+            return ExitCode::SOFTWARE;
+        }
+
+        $drawDate = $drawDate->format('Y-m-d');
 
         $fstNumbers = $crawler->filter('th.f_40'); //First, Second, and Third Prize Numbers
         $i = 0;
@@ -276,15 +353,15 @@ class BetController extends Controller
         //Insert Results
         $dbTrans = CompanyDraw::getDb()->beginTransaction();
         try {
-            self::insertResults($magnumArray);
-            self::insertResults($pmpArray);
-            self::insertResults($totoArray);
-            self::insertResults($singaporeArray);
-            self::insertResults($sabahArray);
-            self::insertResults($sarawakArray);
-            self::insertResults($sandakanArray);
-            self::insertResults($toto5dArray);
-            self::insertResults($toto6dArray);
+            self::insertResults($magnumArray,$drawDate);
+            self::insertResults($pmpArray,$drawDate);
+            self::insertResults($totoArray,$drawDate);
+            self::insertResults($singaporeArray,$drawDate);
+            self::insertResults($sabahArray,$drawDate);
+            self::insertResults($sarawakArray,$drawDate);
+            self::insertResults($sandakanArray,$drawDate);
+            self::insertResults($toto5dArray,$drawDate);
+            self::insertResults($toto6dArray,$drawDate);
 
             $dbTrans->commit();
         } catch (\Throwable $e) {
@@ -295,13 +372,15 @@ class BetController extends Controller
         //Process Results
         $dbTrans = Bet::getDb()->beginTransaction();
         try {
-            self::processResults();
+            self::processResults($drawDate);
 
             $dbTrans->commit();
         } catch (\Throwable $e) {
             $dbTrans->rollBack();
             throw $e;
         }
+
+        Yii::info("commands\BetController ends");
 
         /*
          * https://www.check4d.com
@@ -426,9 +505,8 @@ class BetController extends Controller
     }
 
     //Proceed to insert the results
-    private function insertResults($resultsArray) {
+    private function insertResults($resultsArray,$drawDate) {
         $code = $resultsArray["code"];
-        $today = new \DateTime();
 
         //Proceed to insert the results
         switch ($code) {
@@ -440,7 +518,7 @@ class BetController extends Controller
             case Yii::$app->params['COMPANY']['CODE']['SANDAKAN']:
             case Yii::$app->params['COMPANY']['CODE']['SARAWAK']:
                 $company = Company::findOne(['code'=>$code]);
-                $companyDraw = CompanyDraw::findOne(['companyId'=>$company->id,'drawDate'=>$today->format('Y-m-d'),'status'=>Yii::$app->params['COMPANY']['DRAW']['STATUS']['NEW']]);
+                $companyDraw = CompanyDraw::findOne(['companyId'=>$company->id,'drawDate'=>$drawDate,'status'=>Yii::$app->params['COMPANY']['DRAW']['STATUS']['NEW']]);
                 if ($companyDraw) {
                     $companyDraw->status = Yii::$app->params['COMPANY']['DRAW']['STATUS']['DRAWN'];
                     $companyDraw->checkResultsDate = new Expression('Now()');
@@ -467,6 +545,7 @@ class BetController extends Controller
                     $companyDraw->consolation8Prize = $resultsArray["consoArray"][7];
                     $companyDraw->consolation9Prize = $resultsArray["consoArray"][8];
                     $companyDraw->consolation10Prize = $resultsArray["consoArray"][9];
+
                     if (!$companyDraw->save()) {
                         Yii::error($companyDraw->errors);
                         throw new ServerErrorHttpException('Error processing results. code = ' . $code);
@@ -476,7 +555,7 @@ class BetController extends Controller
                 break;
             case 'T5':
                 $company = Company::findOne(['code'=>Yii::$app->params['COMPANY']['CODE']['TOTO']]);
-                $companyDraw = CompanyDraw::findOne(['companyId'=>$company->id,'drawDate'=>$today->format('Y-m-d')]);
+                $companyDraw = CompanyDraw::findOne(['companyId'=>$company->id,'drawDate'=>$drawDate]);
                 if ($companyDraw) {
                     $companyDraw->checkResultsDate = new Expression('Now()');
                     $companyDraw->{'5d1stPrize'} = $resultsArray["1st"];
@@ -493,7 +572,7 @@ class BetController extends Controller
                 break;
             case 'T6':
                 $company = Company::findOne(['code'=>Yii::$app->params['COMPANY']['CODE']['TOTO']]);
-                $companyDraw = CompanyDraw::findOne(['companyId'=>$company->id,'drawDate'=>$today->format('Y-m-d')]);
+                $companyDraw = CompanyDraw::findOne(['companyId'=>$company->id,'drawDate'=>$drawDate]);
                 if ($companyDraw) {
                     $companyDraw->checkResultsDate = new Expression('Now()');
                     $companyDraw->{'6d1stPrize'} = $resultsArray["1st"];
@@ -514,17 +593,14 @@ class BetController extends Controller
         }
     }
 
-    private function processResults() {
+    private function processResults($drawDate) {
         //Proceed to scan the bets to see if they are won or lost
         $btStatusArray = array(Yii::$app->params['BET']['DETAIL']['STATUS']['ACCEPTED'],Yii::$app->params['BET']['DETAIL']['STATUS']['LIMITED']);
         $bets = Bet::find()
-            ->where(['status'=>Yii::$app->params['BET']['STATUS']['NEW']])
-            ->with([
-                'betDetails' => function ($query) use ($btStatusArray) {
-                    $query->andWhere(['status'=>$btStatusArray]);
-                },
-                'betDetails.companyDraw'
-            ])
+            ->innerJoinWith('betDetails')
+            ->where(['bet.status'=>Yii::$app->params['BET']['STATUS']['NEW']])
+            ->andWhere(['bet_detail.drawDate'=>$drawDate,'bet_detail.status'=>$btStatusArray])
+            ->with(['betDetails.companyDraw'])
             ->all();
 
         foreach ($bets as $bet) {
@@ -536,6 +612,10 @@ class BetController extends Controller
                 foreach ($bds as $bd) {
                     $totalWin = 0;
                     $cd = $bd->companyDraw;
+                    if ($cd->status == Yii::$app->params['COMPANY']['DRAW']['STATUS']['NEW']) {
+                        Yii::error("Error processing results due to company draw not ready.");
+                        throw new ServerErrorHttpException('Error processing results due to company draw not ready.');
+                    }
 
                     //Bet Details Attributes
                     $bdNumber = $bd->number;
@@ -611,7 +691,7 @@ class BetController extends Controller
                             $winAmount = $bdSmall * $package->{'4dSmallPrize3'};
                             $totalWin += $winAmount;
                             self::insertBetDetailWin($bdSmall,Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['4D_SMALL_PRIZE_3'],
-                                $package->{'4dSmallPrize2'},$winAmount,$bd->id);
+                                $package->{'4dSmallPrize3'},$winAmount,$bd->id);
                         }
                     }
                     if (!empty($bd4a)) { //1st prize only
@@ -669,19 +749,19 @@ class BetController extends Controller
                         }
                     }
                     if (!empty($bd3abc)) { //1st, 2nd and 3rd prize (last 3 digits)
-                        if ($bdNumber == substr($cd->{'1stPrize'},-3)) {
+                        if (substr($bdNumber,-3) == substr($cd->{'1stPrize'},-3)) {
                             $winAmount = $bd3abc * $package->{'3dAbcPrize1'};
                             $totalWin += $winAmount;
                             self::insertBetDetailWin($bd3abc,Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['3D_ABC_PRIZE_1'],
                                 $package->{'3dAbcPrize1'},$winAmount,$bd->id);
                         }
-                        if ($bdNumber == substr($cd->{'2ndPrize'},-3)) {
+                        if (substr($bdNumber,-3) == substr($cd->{'2ndPrize'},-3)) {
                             $winAmount = $bd3abc * $package->{'3dAbcPrize2'};
                             $totalWin += $winAmount;
                             self::insertBetDetailWin($bd3abc,Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['3D_ABC_PRIZE_2'],
                                 $package->{'3dAbcPrize2'},$winAmount,$bd->id);
                         }
-                        if ($bdNumber == substr($cd->{'3rdPrize'},-3)) {
+                        if (substr($bdNumber,-3) == substr($cd->{'3rdPrize'},-3)) {
                             $winAmount = $bd3abc * $package->{'3dAbcPrize3'};
                             $totalWin += $winAmount;
                             self::insertBetDetailWin($bd3abc,Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['3D_ABC_PRIZE_3'],
@@ -689,7 +769,7 @@ class BetController extends Controller
                         }
                     }
                     if (!empty($bd3a)) { //1st prize only (last 3 digits)
-                        if ($bdNumber == substr($cd->{'1stPrize'},-3)) {
+                        if (substr($bdNumber,-3) == substr($cd->{'1stPrize'},-3)) {
                             $winAmount = $bd3a * $package->{'3d3aPrize'};
                             $totalWin += $winAmount;
                             self::insertBetDetailWin($bd3a,Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['3D_3A_PRIZE'],
@@ -697,7 +777,7 @@ class BetController extends Controller
                         }
                     }
                     if (!empty($bd3b)) { //2nd prize only (last 3 digits)
-                        if ($bdNumber == substr($cd->{'2ndPrize'},-3)) {
+                        if (substr($bdNumber,-3) == substr($cd->{'2ndPrize'},-3)) {
                             $winAmount = $bd3b * $package->{'3d3bPrize'};
                             $totalWin += $winAmount;
                             self::insertBetDetailWin($bd3b,Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['3D_3B_PRIZE'],
@@ -705,7 +785,7 @@ class BetController extends Controller
                         }
                     }
                     if (!empty($bd3c)) { //3rd prize only (last 3 digits)
-                        if ($bdNumber == substr($cd->{'3rdPrize'},-3)) {
+                        if (substr($bdNumber,-3) == substr($cd->{'3rdPrize'},-3)) {
                             $winAmount = $bd3c * $package->{'3d3cPrize'};
                             $totalWin += $winAmount;
                             self::insertBetDetailWin($bd3c,Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['3D_3C_PRIZE'],
@@ -713,11 +793,11 @@ class BetController extends Controller
                         }
                     }
                     if (!empty($bd3d)) { //Special only (last 3 digits)
-                        if ($bdNumber == substr($cd->{'special1Prize'},-3) || $bdNumber == substr($cd->{'special2Prize'},-3) 
-                            || $bdNumber == substr($cd->{'special3Prize'},-3) || $bdNumber == substr($cd->{'special4Prize'},-3)
-                            || $bdNumber == substr($cd->{'special5Prize'},-3) || $bdNumber == substr($cd->{'special6Prize'},-3)
-                            || $bdNumber == substr($cd->{'special7Prize'},-3) || $bdNumber == substr($cd->{'special8Prize'},-3)
-                            || $bdNumber == substr($cd->{'special9Prize'},-3) || $bdNumber == substr($cd->{'special10Prize'},-3)) {
+                        if (substr($bdNumber,-3) == substr($cd->{'special1Prize'},-3) || substr($bdNumber,-3) == substr($cd->{'special2Prize'},-3)
+                            || substr($bdNumber,-3) == substr($cd->{'special3Prize'},-3) || substr($bdNumber,-3) == substr($cd->{'special4Prize'},-3)
+                            || substr($bdNumber,-3) == substr($cd->{'special5Prize'},-3) || substr($bdNumber,-3) == substr($cd->{'special6Prize'},-3)
+                            || substr($bdNumber,-3) == substr($cd->{'special7Prize'},-3) || substr($bdNumber,-3) == substr($cd->{'special8Prize'},-3)
+                            || substr($bdNumber,-3) == substr($cd->{'special9Prize'},-3) || substr($bdNumber,-3) == substr($cd->{'special10Prize'},-3)) {
                             $winAmount = $bd3d * $package->{'3d3dPrize'};
                             $totalWin += $winAmount;
                             self::insertBetDetailWin($bd3d,Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['3D_3D_PRIZE'],
@@ -725,11 +805,11 @@ class BetController extends Controller
                         }
                     }
                     if (!empty($bd3e)) { //Consolation only (last 3 digits)
-                        if ($bdNumber == substr($cd->{'consolation1Prize'},-3) || $bdNumber == substr($cd->{'consolation2Prize'},-3)
-                            || $bdNumber == substr($cd->{'consolation3Prize'},-3) || $bdNumber == substr($cd->{'consolation4Prize'},-3)
-                            || $bdNumber == substr($cd->{'consolation5Prize'},-3) || $bdNumber == substr($cd->{'consolation6Prize'},-3)
-                            || $bdNumber == substr($cd->{'consolation7Prize'},-3) || $bdNumber == substr($cd->{'consolation8Prize'},-3)
-                            || $bdNumber == substr($cd->{'consolation9Prize'},-3) || $bdNumber == substr($cd->{'consolation10Prize'},-3)) {
+                        if (substr($bdNumber,-3) == substr($cd->{'consolation1Prize'},-3) || substr($bdNumber,-3) == substr($cd->{'consolation2Prize'},-3)
+                            || substr($bdNumber,-3) == substr($cd->{'consolation3Prize'},-3) || substr($bdNumber,-3) == substr($cd->{'consolation4Prize'},-3)
+                            || substr($bdNumber,-3) == substr($cd->{'consolation5Prize'},-3) || substr($bdNumber,-3) == substr($cd->{'consolation6Prize'},-3)
+                            || substr($bdNumber,-3) == substr($cd->{'consolation7Prize'},-3) || substr($bdNumber,-3) == substr($cd->{'consolation8Prize'},-3)
+                            || substr($bdNumber,-3) == substr($cd->{'consolation9Prize'},-3) || substr($bdNumber,-3) == substr($cd->{'consolation10Prize'},-3)) {
                             $winAmount = $bd3e * $package->{'3d3ePrize'};
                             $totalWin += $winAmount;
                             self::insertBetDetailWin($bd3e,Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['3D_3E_PRIZE'],
@@ -819,8 +899,14 @@ class BetController extends Controller
                     $grandTotalWin += $totalWin;
                 } //End foreach ($bds as $bd) {
             }
-            $bet->totalWin = $grandTotalWin;
-            $bet->status = Yii::$app->params['BET']['STATUS']['PROCESSED'];
+            $bet->totalWin += $grandTotalWin;
+            //Make sure all the betDetails under the bet are processed
+            $oustandingBdCount = BetDetail::find()
+                ->where(['betId'=>$bet->id,'won'=>null])
+                ->count();
+            if ($oustandingBdCount <= 0) {
+                $bet->status = Yii::$app->params['BET']['STATUS']['PROCESSED'];
+            }
             if (!$bet->save()) {
                 Yii::error($bet->errors);
                 throw new ServerErrorHttpException('Error saving bet. Id = '.$bet->id);
@@ -830,6 +916,7 @@ class BetController extends Controller
             $ud = UserDetail::findOne(['userId'=>$bet->createdBy]);
             $ud->outstandingBet -= $bet->totalSales;
             $ud->balance -= $bet->totalSales;
+            $ud->balance += $bet->totalCommission; //After the bets are processed, give the commission back to user as credit available to bet
             if ($grandTotalWin > 0) {
                 $ud->balance += $grandTotalWin;
             }

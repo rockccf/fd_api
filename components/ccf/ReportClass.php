@@ -389,13 +389,7 @@ class ReportClass extends BaseObject
                     foreach ($bdws as $bdw) {
                         $winPrizeType = null;
                         $winPrizeAmount = null;
-
-                        foreach ( Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE'] as $key=>$winPrizeType) {
-                            if ($bdw->winPrizeType == $winPrizeType) {
-                                $winPrizeType = $key;
-                                break;
-                            }
-                        }
+                        $winPrizeType = CommonClass::getWinPrizeTypeText($bdw->winPrizeType);
 
                         $rowArray[] = [
                             "username" => $agent->username,
@@ -428,12 +422,7 @@ class ReportClass extends BaseObject
                         foreach ($bdws as $bdw) {
                             $winPrizeType = null;
                             $winPrizeAmount = null;
-
-                            switch ($bdw->winPrizeType) {
-                                case Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['4D_BIG_PRIZE_1']:
-                                    $winPrizeType = 'Big Prize 1';
-                                    break;
-                            }
+                            $winPrizeType = CommonClass::getWinPrizeTypeText($bdw->winPrizeType);
 
                             $rowArray[] = [
                                 "username" => $player->username,
@@ -470,13 +459,7 @@ class ReportClass extends BaseObject
                 foreach ($bdws as $bdw) {
                     $winPrizeType = null;
                     $winPrizeAmount = null;
-
-                    foreach ( Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE'] as $key=>$winPrizeType) {
-                        if ($bdw->winPrizeType == $winPrizeType) {
-                            $winPrizeType = $key;
-                            break;
-                        }
-                    }
+                    $winPrizeType = CommonClass::getWinPrizeTypeText($bdw->winPrizeType);
 
                     $rowArray[] = [
                         "username" => Yii::$app->user->identity->username,
@@ -509,12 +492,7 @@ class ReportClass extends BaseObject
                     foreach ($bdws as $bdw) {
                         $winPrizeType = null;
                         $winPrizeAmount = null;
-
-                        switch ($bdw->winPrizeType) {
-                            case Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['4D_BIG_PRIZE_1']:
-                                $winPrizeType = 'Big Prize 1';
-                                break;
-                        }
+                        $winPrizeType = CommonClass::getWinPrizeTypeText($bdw->winPrizeType);
 
                         $rowArray[] = [
                             "username" => $player->username,
@@ -546,12 +524,7 @@ class ReportClass extends BaseObject
                 foreach ($bdws as $bdw) {
                     $winPrizeType = null;
                     $winPrizeAmount = null;
-
-                    switch ($bdw->winPrizeType) {
-                        case Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['4D_BIG_PRIZE_1']:
-                            $winPrizeType = 'Big Prize 1';
-                            break;
-                    }
+                    $winPrizeType = CommonClass::getWinPrizeTypeText($bdw->winPrizeType);
 
                     $rowArray[] = [
                         "username" => Yii::$app->user->identity->username,

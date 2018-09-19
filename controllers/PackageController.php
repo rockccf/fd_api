@@ -147,6 +147,10 @@ class PackageController extends ActiveController
         $package = Package::find();
         $where = null;
 
+        if (Yii::$app->user->identity->userType == Yii::$app->params['USER']['TYPE']['MASTER']) {
+            $where = [['masterId' => Yii::$app->user->identity->masterId]];
+        }
+
         return CommonClass::prepareActiveQueryDataProvider($params,$package,$where);
     }
 }
