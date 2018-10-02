@@ -58,6 +58,11 @@ class BetController extends Controller
             $drawDate = new \DateTime($drawDate);
         }
         $drawDate->setTime(0,0);
+        $day = $drawDate->format('N');
+        $specialDraw = false;
+        if ($day == 2) {
+            $specialDraw = true;
+        }
         $today = new \DateTime();
         Yii::info("commands\BetController starts, today = ".$today->format('Y-m-d').", drawDate = ".$drawDate->format('Y-m-d'));
 
@@ -76,8 +81,10 @@ class BetController extends Controller
         $sarawakArray["code"] = Yii::$app->params['COMPANY']['CODE']['SARAWAK'];
 
         $dates = $crawler->filter('b.f_16'); //Draw dates for all the companies except 5d/6d
+        $validDatesCount = 0;
         $i = 0;
         foreach ($dates as $dateObj) {
+            $i++;
             $value = trim($dateObj->nodeValue);
             $value = preg_replace('/\xc2\xa0/','',$value); //Replace non breaking space
             $value = preg_replace('/[\s\+]/', '', $value); //Replace plus sign
@@ -90,6 +97,11 @@ class BetController extends Controller
                 Yii::error("dateObj, invalid date. i = $i, value = $value");
                 continue;
             }
+
+            if ($specialDraw && $i == 6) { //if it's singapore and it's special draw (tuesday), ignore singapore results
+                continue;
+            }
+
             $date = \DateTime::createFromFormat('d/m/Y', $value);
             $date->setTime(0,0);
             if ($date != $drawDate) {
@@ -97,17 +109,26 @@ class BetController extends Controller
                 return ExitCode::SOFTWARE;
             }
 
-            $i++;
-        }
-        //Make sure there are 9 dates found
-        if ($i != 9) {
-            Yii::error("dates, $i dates found.");
-            return ExitCode::SOFTWARE;
+            $validDatesCount++;
         }
 
+        if ($specialDraw) { //Make sure there are 8 dates found (singapore is excluded on special draws)
+            if ($validDatesCount != 8) {
+                Yii::error("dates, $validDatesCount dates found.");
+                return ExitCode::SOFTWARE;
+            }
+        } else { //Make sure there are 9 dates found
+            if ($validDatesCount != 9) {
+                Yii::error("dates, $validDatesCount dates found.");
+                return ExitCode::SOFTWARE;
+            }
+        }
+
+
         $sixdDate = $crawler->filter('td.resultdrawdate'); //Draw date for toto 5d/6d
-        $i = 0;
+        $validDatesCount = 0;
         foreach ($sixdDate as $sixdDateObj) {
+            $i++;
             $value = trim($sixdDateObj->nodeValue);
             $value = preg_replace('/\xc2\xa0/','',$value); //Replace non breaking space
             $value = preg_replace('/[\s\+]/', '', $value); //Replace plus sign
@@ -126,11 +147,11 @@ class BetController extends Controller
                 Yii::error("sixdDateObj, date is not the same as drawDate. i = $i, value = $value");
                 return ExitCode::SOFTWARE;
             }
-            $i++;
+            $validDatesCount++;
         }
         //Make sure there's 1 date found
-        if ($i != 1) {
-            Yii::error("sixdDate, $i dates found.");
+        if ($validDatesCount != 1) {
+            Yii::error("sixdDate, $validDatesCount dates found.");
             return ExitCode::SOFTWARE;
         }
 
@@ -356,7 +377,9 @@ class BetController extends Controller
             self::insertResults($magnumArray,$drawDate);
             self::insertResults($pmpArray,$drawDate);
             self::insertResults($totoArray,$drawDate);
-            self::insertResults($singaporeArray,$drawDate);
+            if (!$specialDraw) {
+                self::insertResults($singaporeArray,$drawDate);
+            }
             self::insertResults($sabahArray,$drawDate);
             self::insertResults($sarawakArray,$drawDate);
             self::insertResults($sandakanArray,$drawDate);
@@ -612,6 +635,7 @@ class BetController extends Controller
         foreach ($bets as $bet) {
             $grandTotalWin = 0;
             $bds = $bet->betDetails;
+            $totalCommission = 0;
             if (count($bds) > 0) {
                 //Found accepted or limited bets
                 $package = Package::findOne($bet->packageId);
@@ -624,6 +648,7 @@ class BetController extends Controller
                     }
 
                     //Bet Details Attributes
+                    $totalCommission += $bd->totalCommission;
                     $bdNumber = $bd->number;
                     $bdBig = $bd->big;
                     $bdSmall = $bd->small;
@@ -905,6 +930,32 @@ class BetController extends Controller
                     $grandTotalWin += $totalWin;
                 } //End foreach ($bds as $bd) {
             }
+
+            $bns = $bet->betNumbers;
+            $totalSales = 0;
+            foreach ($bns as $bn) {
+                $soldBig = $bn->soldBig;
+                $soldSmall = $bn->soldSmall;
+                $sold4a = $bn->sold4a;
+                $sold4b = $bn->sold4b;
+                $sold4c = $bn->sold4c;
+                $sold4d = $bn->sold4d;
+                $sold4e = $bn->sold4e;
+                $sold4f = $bn->sold4f;
+                $sold3abc = $bn->sold3abc;
+                $sold3a = $bn->sold3a;
+                $sold3b = $bn->sold3b;
+                $sold3c = $bn->sold3c;
+                $sold3d = $bn->sold3d;
+                $sold3e = $bn->sold3e;
+                $sold5d = $bn->sold5d;
+                $sold6d = $bn->sold6d;
+                $drawDatesCount = count($bn->drawDates);
+
+                $totalSales += $soldBig+$soldSmall+$sold4a+$sold4b+$sold4c+$sold4d+$sold4e+$sold4f;
+                $totalSales += $sold3abc+$sold3a+$sold3b+$sold3c+$sold3d+$sold3e;
+                $totalSales += $sold5d+$sold6d;
+            }
             $bet->totalWin += $grandTotalWin;
             //Make sure all the betDetails under the bet are processed
             $oustandingBdCount = BetDetail::find()
@@ -920,9 +971,9 @@ class BetController extends Controller
 
             //Update user balance and outstanding bet
             $ud = UserDetail::findOne(['userId'=>$bet->createdBy]);
-            $ud->outstandingBet -= $bet->totalSales;
-            $ud->balance -= $bet->totalSales;
-            $ud->balance += $bet->totalCommission; //After the bets are processed, give the commission back to user as credit available to bet
+            $ud->outstandingBet -= $totalSales;
+            $ud->balance -= $totalSales;
+            $ud->balance += $totalCommission; //After the bets are processed, give the commission back to user as credit available to bet
             if ($grandTotalWin > 0) {
                 $ud->balance += $grandTotalWin;
             }

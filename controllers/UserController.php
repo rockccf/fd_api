@@ -179,7 +179,7 @@ class UserController extends ActiveController
             $where = [['masterId'=>Yii::$app->user->identity->masterId,'userType'=>$userTypes]];
         } else if (Yii::$app->user->identity->userType == Yii::$app->params['USER']['TYPE']['AGENT']) {
             $userTypes = [Yii::$app->params['USER']['TYPE']['PLAYER']];
-            $where = [['masterId'=>Yii::$app->user->identity->masterId,'userType'=>$userTypes]];
+            $where = [['masterId'=>Yii::$app->user->identity->masterId,'userType'=>$userTypes,'agentId'=>Yii::$app->user->identity->getId()]];
         } else if (Yii::$app->user->identity->userType == Yii::$app->params['USER']['TYPE']['PLAYER']) {
             $where = [['id'=>Yii::$app->user->identity->id]];
         }
@@ -249,6 +249,15 @@ class UserController extends ActiveController
                     return $userDetail;
                 }
             } else if ($user->userType == Yii::$app->params['USER']['TYPE']['PLAYER']) {
+                $uplineAgent = $user->agent;
+                //Check if the agent has sufficient credit limit to grant
+                $creditAvailable = $uplineAgent->userDetail->creditLimit - $uplineAgent->userDetail->creditGranted;
+                $userDetail = $user->userDetail;
+                $grantedCredit = $params['creditLimit']-$userDetail->creditLimit; //This might be negative, if the agent decreases the credit limit
+                if ($grantedCredit > $creditAvailable) {
+                    Throw new UnprocessableEntityHttpException("You do not have sufficient credit to grant to the player.");
+                }
+
                 $userDetail = new UserDetail();
                 $userDetail->packageId = Yii::$app->user->identity->userDetail->packageId; //Follow upline agent settings
                 $userDetail->creditLimit = $params['creditLimit'];
@@ -260,6 +269,14 @@ class UserController extends ActiveController
                 if (!$userDetail->save()) {
                     Yii::error($userDetail->errors);
                     return $userDetail;
+                }
+
+                //Proceed to update upline creditGranted
+                $uplineAgentUd = $uplineAgent->userDetail;
+                $uplineAgentUd->creditGranted += $grantedCredit;
+                if (!$uplineAgentUd->save()) {
+                    Yii::error($uplineAgentUd->errors);
+                    return $uplineAgentUd;
                 }
             }
 
@@ -334,6 +351,9 @@ class UserController extends ActiveController
                 $userDetail->betMethod = $params['betMethod']; //Follow upline agent settings
                 $userDetail->betGdLotto = $uplineAgent->userDetail->betGdLotto; //Follow upline agent settings
                 $userDetail->bet6d = $uplineAgent->userDetail->bet6d; //Follow upline agent settings
+                $userDetail->extra4dCommRate = $params['extra4dCommRate'];
+                $userDetail->extra6dCommRate = $params['extra6dCommRate'];
+                $userDetail->extraGdCommRate = $params['extraGdCommRate'];
                 $userDetail->userId = $user->id;
 
                 if (!$userDetail->save()) {

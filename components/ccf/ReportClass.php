@@ -34,25 +34,18 @@ class ReportClass extends BaseObject
                 //Calculate own account first
                 $userTotalSales = $userTotalOwnCommission = $userTotalExtraCommission = $userTotalCommission = $userTotalWin = 0;
 
-                $subquery = (new Query())
-                    ->select('id')
-                    ->from('bet_detail bd')
-                    ->where('bd.betId = b.id')
-                    ->andWhere(['between','drawDate',$drawDateStart,$drawDateEnd]);
-
-                $processedBets = Bet::find()
-                    ->alias('b')
+                $betDetails = BetDetail::find()
                     ->where(['createdBy'=>$agent->id])
-                    ->with(['betDetails'])
-                    //->andWhere(['status'=>Yii::$app->params['BET']['STATUS']['PROCESSED']])
-                    ->andWhere(['exists', $subquery])
+                    ->andWhere(['between','drawDate',$drawDateStart,$drawDateEnd])
+                    ->andWhere(['not',['status'=>Yii::$app->params['BET']['DETAIL']['STATUS']['VOIDED']]])
                     ->all();
+
                 //$processedBets = Yii::$app->user->identity->processedBets;
-                foreach ($processedBets as $processedBet) {
-                    $totalSales = $processedBet->totalSales;
-                    $ownCommission = $processedBet->ownCommission;
-                    $extraCommission = $processedBet->extraCommission;
-                    $totalWin = $processedBet->totalWin;
+                foreach ($betDetails as $betDetail) {
+                    $totalSales = $betDetail->totalSales;
+                    $ownCommission = $betDetail->ownCommission;
+                    $extraCommission = $betDetail->extraCommission;
+                    $totalWin = $betDetail->totalWin;
 
                     $userTotalSales += $totalSales;
                     $userTotalOwnCommission += $ownCommission;
@@ -102,23 +95,17 @@ class ReportClass extends BaseObject
                     $userTotalCommission = 0;
                     $userTotalWin = 0;
 
-                    $subquery = (new Query())
-                        ->select('id')
-                        ->from('bet_detail bd')
-                        ->where('bd.betId = b.id')
-                        ->andWhere(['between','drawDate',$drawDateStart,$drawDateEnd]);
-
-                    $processedBets = Bet::find()
-                        ->alias('b')
-                        //->where(['status'=>Yii::$app->params['BET']['STATUS']['PROCESSED']])
+                    $betDetails = BetDetail::find()
                         ->where(['createdBy'=>$player->id])
-                        ->andWhere(['exists', $subquery])
+                        ->andWhere(['between','drawDate',$drawDateStart,$drawDateEnd])
+                        ->andWhere(['not',['status'=>Yii::$app->params['BET']['DETAIL']['STATUS']['VOIDED']]])
                         ->all();
-                    foreach ($processedBets as $processedBet) {
-                        $totalSales = $processedBet->totalSales;
-                        $ownCommission = $processedBet->ownCommission;
-                        $extraCommission = $processedBet->extraCommission;
-                        $totalWin = $processedBet->totalWin;
+
+                    foreach ($betDetails as $betDetail) {
+                        $totalSales = $betDetail->totalSales;
+                        $ownCommission = $betDetail->ownCommission;
+                        $extraCommission = $betDetail->extraCommission;
+                        $totalWin = $betDetail->totalWin;
 
                         $userTotalSales += $totalSales;
                         $userTotalOwnCommission += $ownCommission;
@@ -177,25 +164,18 @@ class ReportClass extends BaseObject
             //Calculate own account first
             $userTotalSales = $userTotalOwnCommission = $userTotalExtraCommission = $userTotalCommission = $userTotalWin = 0;
 
-            $subquery = (new Query())
-                ->select('id')
-                ->from('bet_detail bd')
-                ->where('bd.betId = b.id')
-                ->andWhere(['between','drawDate',$drawDateStart,$drawDateEnd]);
-
-            $processedBets = Bet::find()
-                ->alias('b')
+            $betDetails = BetDetail::find()
                 ->where(['createdBy'=>Yii::$app->user->identity->getId()])
-                ->with(['betDetails'])
-                //->andWhere(['status'=>Yii::$app->params['BET']['STATUS']['PROCESSED']])
-                ->andWhere(['exists', $subquery])
+                ->andWhere(['between','drawDate',$drawDateStart,$drawDateEnd])
+                ->andWhere(['not',['status'=>Yii::$app->params['BET']['DETAIL']['STATUS']['VOIDED']]])
                 ->all();
+
             //$processedBets = Yii::$app->user->identity->processedBets;
-            foreach ($processedBets as $processedBet) {
-                $totalSales = $processedBet->totalSales;
-                $ownCommission = $processedBet->ownCommission;
-                $extraCommission = $processedBet->extraCommission;
-                $totalWin = $processedBet->totalWin;
+            foreach ($betDetails as $betDetail) {
+                $totalSales = $betDetail->totalSales;
+                $ownCommission = $betDetail->ownCommission;
+                $extraCommission = $betDetail->extraCommission;
+                $totalWin = $betDetail->totalWin;
 
                 $userTotalSales += $totalSales;
                 $userTotalOwnCommission += $ownCommission;
@@ -245,23 +225,17 @@ class ReportClass extends BaseObject
                 $userTotalCommission = 0;
                 $userTotalWin = 0;
 
-                $subquery = (new Query())
-                    ->select('id')
-                    ->from('bet_detail bd')
-                    ->where('bd.betId = b.id')
-                    ->andWhere(['between','drawDate',$drawDateStart,$drawDateEnd]);
-
-                $processedBets = Bet::find()
-                    ->alias('b')
-                    //->where(['status'=>Yii::$app->params['BET']['STATUS']['PROCESSED']])
+                $betDetails = BetDetail::find()
                     ->where(['createdBy'=>$player->id])
-                    ->andWhere(['exists', $subquery])
+                    ->andWhere(['between','drawDate',$drawDateStart,$drawDateEnd])
+                    ->andWhere(['not',['status'=>Yii::$app->params['BET']['DETAIL']['STATUS']['VOIDED']]])
                     ->all();
-                foreach ($processedBets as $processedBet) {
-                    $totalSales = $processedBet->totalSales;
-                    $ownCommission = $processedBet->ownCommission;
-                    $extraCommission = $processedBet->extraCommission;
-                    $totalWin = $processedBet->totalWin;
+
+                foreach ($betDetails as $betDetail) {
+                    $totalSales = $betDetail->totalSales;
+                    $ownCommission = $betDetail->ownCommission;
+                    $extraCommission = $betDetail->extraCommission;
+                    $totalWin = $betDetail->totalWin;
 
                     $userTotalSales += $totalSales;
                     $userTotalOwnCommission += $ownCommission;
@@ -313,25 +287,19 @@ class ReportClass extends BaseObject
             $result["grandTotalCompanyPayout"] = $grandTotalCompanyPayout;
             $result["grandTotalCompanyBalance"] = $grandTotalCompanyBalance;
         } else if (Yii::$app->user->identity->userType == Yii::$app->params['USER']['TYPE']['PLAYER']) {
-            $subquery = (new Query())
-                ->select('id')
-                ->from('bet_detail bd')
-                ->where('bd.betId = b.id')
-                ->andWhere(['between','drawDate',$drawDateStart,$drawDateEnd]);
-
-            $processedBets = Bet::find()
-                ->alias('b')
-                //->where(['status'=>Yii::$app->params['BET']['STATUS']['PROCESSED']])
+            $betDetails = BetDetail::find()
                 ->where(['createdBy'=>Yii::$app->user->identity->getId()])
-                ->andWhere(['exists', $subquery])
+                ->andWhere(['between','drawDate',$drawDateStart,$drawDateEnd])
+                ->andWhere(['not',['status'=>Yii::$app->params['BET']['DETAIL']['STATUS']['VOIDED']]])
                 ->all();
+
             $grandTotalSales = 0;
             $grandTotalCommission = 0;
             $grandTotalWin = 0;
-            foreach ($processedBets as $processedBet) {
-                $totalSales = $processedBet->totalSales;
-                $totalCommission = $processedBet->totalCommission;
-                $totalWin = $processedBet->totalWin;
+            foreach ($betDetails as $betDetail) {
+                $totalSales = $betDetail->totalSales;
+                $totalCommission = $betDetail->totalCommission;
+                $totalWin = $betDetail->totalWin;
 
                 $grandTotalSales += $totalSales;
                 $grandTotalCommission += $totalCommission;
@@ -365,6 +333,7 @@ class ReportClass extends BaseObject
      */
     public static function getDrawWinningNumber($params) {
         $result = $rowArray = [];
+        $grandTotalWin = 0;
         $drawDateStart = !empty($params["drawDateStart"]) ? Date('Y-m-d 00:00:00', strtotime($params["drawDateStart"])) : null;
         $drawDateEnd = !empty($params["drawDateEnd"]) ? Date('Y-m-d 00:00:00', strtotime($params["drawDateEnd"])) : null;
 
@@ -390,6 +359,17 @@ class ReportClass extends BaseObject
                         $winPrizeType = null;
                         $winPrizeAmount = null;
                         $winPrizeType = CommonClass::getWinPrizeTypeText($bdw->winPrizeType);
+                        $threeDigitPrize = false;
+                        if ($bdw->winPrizeType == Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['3D_ABC_PRIZE_1']
+                            || $bdw->winPrizeType == Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['3D_ABC_PRIZE_2']
+                            || $bdw->winPrizeType == Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['3D_ABC_PRIZE_3']
+                            || $bdw->winPrizeType == Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['3D_3A_PRIZE']
+                            || $bdw->winPrizeType == Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['3D_3B_PRIZE']
+                            || $bdw->winPrizeType == Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['3D_3C_PRIZE']
+                            || $bdw->winPrizeType == Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['3D_3D_PRIZE']
+                            || $bdw->winPrizeType == Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['3D_3E_PRIZE']) {
+                            $threeDigitPrize = true;
+                        }
 
                         $rowArray[] = [
                             "username" => $agent->username,
@@ -398,11 +378,14 @@ class ReportClass extends BaseObject
                             "number" => $bd->number,
                             "betAmount" => $bdw->betAmount,
                             "prize" => $winPrizeType,
+                            "threeDigitPrize" => $threeDigitPrize,
                             "prizeAmount" => $bdw->winPrizeAmount,
                             "totalWin" => $bdw->totalWin,
                             "betDate" => $betDate,
                             "remarks" => $bd->remarks
                         ];
+
+                        $grandTotalWin += $bdw->totalWin;
                     }
                 }
 
@@ -423,6 +406,17 @@ class ReportClass extends BaseObject
                             $winPrizeType = null;
                             $winPrizeAmount = null;
                             $winPrizeType = CommonClass::getWinPrizeTypeText($bdw->winPrizeType);
+                            $threeDigitPrize = false;
+                            if ($bdw->winPrizeType == Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['3D_ABC_PRIZE_1']
+                                || $bdw->winPrizeType == Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['3D_ABC_PRIZE_2']
+                                || $bdw->winPrizeType == Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['3D_ABC_PRIZE_3']
+                                || $bdw->winPrizeType == Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['3D_3A_PRIZE']
+                                || $bdw->winPrizeType == Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['3D_3B_PRIZE']
+                                || $bdw->winPrizeType == Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['3D_3C_PRIZE']
+                                || $bdw->winPrizeType == Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['3D_3D_PRIZE']
+                                || $bdw->winPrizeType == Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['3D_3E_PRIZE']) {
+                                $threeDigitPrize = true;
+                            }
 
                             $rowArray[] = [
                                 "username" => $player->username,
@@ -431,16 +425,18 @@ class ReportClass extends BaseObject
                                 "number" => $bd->number,
                                 "betAmount" => $bdw->betAmount,
                                 "prize" => $winPrizeType,
+                                "threeDigitPrize" => $threeDigitPrize,
                                 "prizeAmount" => $bdw->winPrizeAmount,
                                 "totalWin" => $bdw->totalWin,
                                 "betDate" => $bd->createdAt,
                                 "remarks" => $bd->remarks
                             ];
+
+                            $grandTotalWin += $bdw->totalWin;
                         }
                     }
                 }
             }
-            $result["rowArray"] = $rowArray;
         } else if (Yii::$app->user->identity->userType == Yii::$app->params['USER']['TYPE']['AGENT']) {
             $bds = BetDetail::find()
                 ->alias('bd')
@@ -460,6 +456,17 @@ class ReportClass extends BaseObject
                     $winPrizeType = null;
                     $winPrizeAmount = null;
                     $winPrizeType = CommonClass::getWinPrizeTypeText($bdw->winPrizeType);
+                    $threeDigitPrize = false;
+                    if ($bdw->winPrizeType == Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['3D_ABC_PRIZE_1']
+                        || $bdw->winPrizeType == Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['3D_ABC_PRIZE_2']
+                        || $bdw->winPrizeType == Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['3D_ABC_PRIZE_3']
+                        || $bdw->winPrizeType == Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['3D_3A_PRIZE']
+                        || $bdw->winPrizeType == Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['3D_3B_PRIZE']
+                        || $bdw->winPrizeType == Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['3D_3C_PRIZE']
+                        || $bdw->winPrizeType == Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['3D_3D_PRIZE']
+                        || $bdw->winPrizeType == Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['3D_3E_PRIZE']) {
+                        $threeDigitPrize = true;
+                    }
 
                     $rowArray[] = [
                         "username" => Yii::$app->user->identity->username,
@@ -468,11 +475,14 @@ class ReportClass extends BaseObject
                         "number" => $bd->number,
                         "betAmount" => $bdw->betAmount,
                         "prize" => $winPrizeType,
+                        "threeDigitPrize" => $threeDigitPrize,
                         "prizeAmount" => $bdw->winPrizeAmount,
                         "totalWin" => $bdw->totalWin,
                         "betDate" => $betDate,
                         "remarks" => $bd->remarks
                     ];
+
+                    $grandTotalWin += $bdw->totalWin;
                 }
             }
 
@@ -493,6 +503,17 @@ class ReportClass extends BaseObject
                         $winPrizeType = null;
                         $winPrizeAmount = null;
                         $winPrizeType = CommonClass::getWinPrizeTypeText($bdw->winPrizeType);
+                        $threeDigitPrize = false;
+                        if ($bdw->winPrizeType == Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['3D_ABC_PRIZE_1']
+                            || $bdw->winPrizeType == Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['3D_ABC_PRIZE_2']
+                            || $bdw->winPrizeType == Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['3D_ABC_PRIZE_3']
+                            || $bdw->winPrizeType == Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['3D_3A_PRIZE']
+                            || $bdw->winPrizeType == Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['3D_3B_PRIZE']
+                            || $bdw->winPrizeType == Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['3D_3C_PRIZE']
+                            || $bdw->winPrizeType == Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['3D_3D_PRIZE']
+                            || $bdw->winPrizeType == Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['3D_3E_PRIZE']) {
+                            $threeDigitPrize = true;
+                        }
 
                         $rowArray[] = [
                             "username" => $player->username,
@@ -501,15 +522,17 @@ class ReportClass extends BaseObject
                             "number" => $bd->number,
                             "betAmount" => $bdw->betAmount,
                             "prize" => $winPrizeType,
+                            "threeDigitPrize" => $threeDigitPrize,
                             "prizeAmount" => $bdw->winPrizeAmount,
                             "totalWin" => $bdw->totalWin,
                             "betDate" => $bd->createdAt,
                             "remarks" => $bd->remarks
                         ];
+
+                        $grandTotalWin += $bdw->totalWin;
                     }
                 }
             }
-            $result["rowArray"] = $rowArray;
         } else if (Yii::$app->user->identity->userType == Yii::$app->params['USER']['TYPE']['PLAYER']) {
             $bds = BetDetail::find()
                 ->alias('bd')
@@ -525,6 +548,17 @@ class ReportClass extends BaseObject
                     $winPrizeType = null;
                     $winPrizeAmount = null;
                     $winPrizeType = CommonClass::getWinPrizeTypeText($bdw->winPrizeType);
+                    $threeDigitPrize = false;
+                    if ($bdw->winPrizeType == Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['3D_ABC_PRIZE_1']
+                        || $bdw->winPrizeType == Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['3D_ABC_PRIZE_2']
+                        || $bdw->winPrizeType == Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['3D_ABC_PRIZE_3']
+                        || $bdw->winPrizeType == Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['3D_3A_PRIZE']
+                        || $bdw->winPrizeType == Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['3D_3B_PRIZE']
+                        || $bdw->winPrizeType == Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['3D_3C_PRIZE']
+                        || $bdw->winPrizeType == Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['3D_3D_PRIZE']
+                        || $bdw->winPrizeType == Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['3D_3E_PRIZE']) {
+                        $threeDigitPrize = true;
+                    }
 
                     $rowArray[] = [
                         "username" => Yii::$app->user->identity->username,
@@ -533,16 +567,19 @@ class ReportClass extends BaseObject
                         "number" => $bd->number,
                         "betAmount" => $bdw->betAmount,
                         "prize" => $winPrizeType,
+                        "threeDigitPrize" => $threeDigitPrize,
                         "prizeAmount" => $bdw->winPrizeAmount,
                         "totalWin" => $bdw->totalWin,
                         "betDate" => $bd->createdAt,
                         "remarks" => $bd->remarks
                     ];
+
+                    $grandTotalWin += $bdw->totalWin;
                 }
             }
-
-            $result["rowArray"] = $rowArray;
         }
+        $result["rowArray"] = $rowArray;
+        $result["grandTotalWin"] = $grandTotalWin;
 
         return $result;
     }

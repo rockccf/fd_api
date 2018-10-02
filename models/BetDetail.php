@@ -196,8 +196,12 @@ class BetDetail extends \yii\db\ActiveRecord
         };
 
         $fields['voidDate'] = function ($model) {
-            $voidDate = new \DateTime($model->voidDate);
-            return $voidDate->format(Yii::$app->params['FORMAT']['DATETIME']);
+            if (!empty($model->voidDate)) {
+                $voidDate = new \DateTime($model->voidDate);
+                return $voidDate->format(Yii::$app->params['FORMAT']['DATETIME']);
+            } else {
+                return null;
+            }
         };
 
         $fields['voidDateBy'] = function ($model) {

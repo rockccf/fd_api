@@ -11,6 +11,7 @@ use app\models\Master;
 use app\models\UserDetail;
 use Yii;
 use app\components\ccf\CommonClass;
+use yii\db\Expression;
 use yii\db\Query;
 use yii\filters\AccessControl;
 use yii\filters\auth\HttpBearerAuth;
@@ -654,6 +655,7 @@ class BetController extends ActiveController
         $voidCount = 0;
         foreach ($bds as $bd) {
             $bd->status = Yii::$app->params['BET']['DETAIL']['STATUS']['VOIDED'];
+            $bd->voidDate = new Expression('NOW()');
             if (!$bd->save()) {
                 Yii::error($bd->errors);
                 return $bd;
@@ -702,7 +704,7 @@ class BetController extends ActiveController
         if (!empty($betDetailIdArray)) {
             $bds = $bds->andWhere(['id'=>$betDetailIdArray]);
         }
-        $bds = $bds->asArray()->all();
+        $bds = $bds->all();
 
         return $bds;
     }
@@ -790,13 +792,61 @@ class BetController extends ActiveController
         $bds = $bds->all();
 
         $result = [];
+        $totalBig = $totalSmall = $total4a = $total4b = $total4c = $total4d = $total4e = $total4f = 0;
+        $total3abc = $total3a = $total3b = $total3c = $total3d = $total3e = $total5d = $total6d = 0;
+        $grandTotal = 0;
         for ($i=0;$i<count($bds);$i++) {
             $result[$i] = ArrayHelper::toArray($bds[$i]);
+            $total = $result[$i]["big"]+$result[$i]["small"]+$result[$i]["4a"]+$result[$i]["4b"]+$result[$i]["4c"];
+            $total += $result[$i]["4d"]+$result[$i]["4e"]+$result[$i]["4f"];
+            $total += $result[$i]["3abc"]+$result[$i]["3a"]+$result[$i]["3b"];
+            $total += $result[$i]["3c"]+$result[$i]["3d"]+$result[$i]["3e"];
+            $total += $result[$i]["5d"]+$result[$i]["6d"];
+            $result[$i]["total"] = round($total,3);
             $result[$i]["creator"] = $bds[$i]->creator;
             $result[$i]["companyDraw"] = $bds[$i]->companyDraw;
+
+            $totalBig += $result[$i]["big"];
+            $totalSmall += $result[$i]["small"];
+            $total4a += $result[$i]["4a"];
+            $total4b += $result[$i]["4b"];
+            $total4c += $result[$i]["4c"];
+            $total4d += $result[$i]["4d"];
+            $total4e += $result[$i]["4e"];
+            $total4f += $result[$i]["4f"];
+            $total3abc += $result[$i]["3abc"];
+            $total3a += $result[$i]["3a"];
+            $total3b += $result[$i]["3b"];
+            $total3c += $result[$i]["3c"];
+            $total3d += $result[$i]["3d"];
+            $total3e += $result[$i]["3e"];
+            $total5d += $result[$i]["5d"];
+            $total6d += $result[$i]["6d"];
+
+            $grandTotal += $total;
         }
 
-        return $result;
+        $resultArray = [
+            'numbers'=>$result,
+            'totalBig' => round($totalBig,3),
+            'totalSmall' => round($totalSmall,3),
+            'total4a' => round($total4a,3),
+            'total4b' => round($total4b,3),
+            'total4c' => round($total4c,3),
+            'total4d' => round($total4d,3),
+            'total4e' => round($total4e,3),
+            'total4f' => round($total4f,3),
+            'total3abc' => round($total3abc,3),
+            'total3a' => round($total3a,3),
+            'total3b' => round($total3b,3),
+            'total3c' => round($total3c,3),
+            'total3d' => round($total3d,3),
+            'total3e' => round($total3e,3),
+            'total5d' => round($total5d,3),
+            'total6d' => round($total6d,3),
+            'grandTotal'=> round($grandTotal,3)
+        ];
+        return $resultArray;
     }
 
     public function actionGetVoidBetHistory() {
@@ -835,13 +885,61 @@ class BetController extends ActiveController
         $bds = $bds->all();
 
         $result = [];
+        $totalBig = $totalSmall = $total4a = $total4b = $total4c = $total4d = $total4e = $total4f = 0;
+        $total3abc = $total3a = $total3b = $total3c = $total3d = $total3e = $total5d = $total6d = 0;
+        $grandTotal = 0;
         for ($i=0;$i<count($bds);$i++) {
             $result[$i] = ArrayHelper::toArray($bds[$i]);
+            $total = $result[$i]["big"]+$result[$i]["small"]+$result[$i]["4a"]+$result[$i]["4b"]+$result[$i]["4c"];
+            $total += $result[$i]["4d"]+$result[$i]["4e"]+$result[$i]["4f"];
+            $total += $result[$i]["3abc"]+$result[$i]["3a"]+$result[$i]["3b"];
+            $total += $result[$i]["3c"]+$result[$i]["3d"]+$result[$i]["3e"];
+            $total += $result[$i]["5d"]+$result[$i]["6d"];
+            $result[$i]["total"] = round($total,3);
             $result[$i]["creator"] = $bds[$i]->creator;
             $result[$i]["companyDraw"] = $bds[$i]->companyDraw;
+
+            $totalBig += $result[$i]["big"];
+            $totalSmall += $result[$i]["small"];
+            $total4a += $result[$i]["4a"];
+            $total4b += $result[$i]["4b"];
+            $total4c += $result[$i]["4c"];
+            $total4d += $result[$i]["4d"];
+            $total4e += $result[$i]["4e"];
+            $total4f += $result[$i]["4f"];
+            $total3abc += $result[$i]["3abc"];
+            $total3a += $result[$i]["3a"];
+            $total3b += $result[$i]["3b"];
+            $total3c += $result[$i]["3c"];
+            $total3d += $result[$i]["3d"];
+            $total3e += $result[$i]["3e"];
+            $total5d += $result[$i]["5d"];
+            $total6d += $result[$i]["6d"];
+
+            $grandTotal += $total;
         }
 
-        return $result;
+        $resultArray = [
+            'numbers'=>$result,
+            'totalBig' => round($totalBig,3),
+            'totalSmall' => round($totalSmall,3),
+            'total4a' => round($total4a,3),
+            'total4b' => round($total4b,3),
+            'total4c' => round($total4c,3),
+            'total4d' => round($total4d,3),
+            'total4e' => round($total4e,3),
+            'total4f' => round($total4f,3),
+            'total3abc' => round($total3abc,3),
+            'total3a' => round($total3a,3),
+            'total3b' => round($total3b,3),
+            'total3c' => round($total3c,3),
+            'total3d' => round($total3d,3),
+            'total3e' => round($total3e,3),
+            'total5d' => round($total5d,3),
+            'total6d' => round($total6d,3),
+            'grandTotal'=> round($grandTotal,3)
+        ];
+        return $resultArray;
     }
 
     private function insertBetDetail($number,$bet,$drawDate,$companyId,$companyCode,$masterId,$betModelId,$betNumberId,
