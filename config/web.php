@@ -65,7 +65,7 @@ $config = [
                 'streamOptions' => [
                     'ssl' => [
                         'allow_self_signed' => true,
-                        'verify_peer' => false,
+                        'verify_per' => false,
                         'verify_peer_name' => false,
                     ],
                 ],
@@ -143,22 +143,8 @@ $config = [
                         'OPTIONS login' => 'options',
                         'PUT change-password' => 'change-password',
                         'OPTIONS change-password' => 'options',
-						'PUT toggle-active' => 'toggle-active',
-                        'OPTIONS toggle-active' => 'options',
 						'GET is-username-exists-again' => 'is-username-exists-again',
                         'OPTIONS is-username-exists-again' => 'options',
-                        'GET is-email-exists-again' => 'is-email-exists-again',
-                        'OPTIONS is-email-exists-again' => 'options',
-                        'GET is-user-email-exists' => 'is-user-email-exists',
-                        'OPTIONS is-user-email-exists' => 'options',
-						'GET identity-refresh' => 'identity-refresh',
-                        'OPTIONS identity-refresh' => 'options',
-                        'POST request-reset-password' => 'request-reset-password',
-                        'OPTIONS request-reset-password' => 'options',                        
-                        'GET verify-reset-password-token' => 'verify-reset-password-token',
-                        'OPTIONS reset-password-token' => 'options',
-                        'POST reset-password' => 'reset-password',
-                        'OPTIONS reset-password' => 'options',
                     ],
                 ],
                 [
@@ -169,6 +155,56 @@ $config = [
                         'OPTIONS update' => 'options'
                     ]
                 ],
+                [
+                    'class' => 'yii\rest\UrlRule',
+                    'controller' => 'master',
+                    'pluralize' => URL_PLURALIZE,
+                ],
+                [
+                    'class' => 'yii\rest\UrlRule',
+                    'controller' => 'company',
+                    'pluralize' => URL_PLURALIZE,
+                ],
+                [
+                    'class' => 'yii\rest\UrlRule',
+                    'controller' => 'company-draw',
+                    'pluralize' => URL_PLURALIZE,
+                    'extraPatterns' => [
+                        'DELETE bulk-delete' => 'bulk-delete',
+                        'OPTIONS bulk-delete' => 'options'
+                    ]
+                ],
+                [
+                    'class' => 'yii\rest\UrlRule',
+                    'controller' => 'package',
+                    'pluralize' => URL_PLURALIZE,
+                ],
+                [
+                    'class' => 'yii\rest\UrlRule',
+                    'controller' => 'bet',
+                    'pluralize' => URL_PLURALIZE,
+                    'extraPatterns' => [
+                        'GET get-bet-slip-history' => 'get-bet-slip-history',
+                        'OPTIONS get-bet-slip-history' => 'options',
+                        'GET get-bet-number-history' => 'get-bet-number-history',
+                        'OPTIONS get-bet-number-history' => 'options',
+                        'GET get-void-bet-history' => 'get-void-bet-history',
+                        'OPTIONS get-void-bet-history' => 'options',
+                        'GET get-voidable-bets' => 'get-voidable-bets',
+                        'OPTIONS get-voidable-bets' => 'options',
+                        'GET get-voided-bets' => 'get-voided-bets',
+                        'OPTIONS get-voided-bets' => 'options'
+                    ]
+                ],
+                [
+                    'class' => 'yii\rest\UrlRule',
+                    'controller' => 'report',
+                    'pluralize' => URL_PLURALIZE,
+                    'extraPatterns' => [
+                        'GET get-report' => 'get-report',
+                        'OPTIONS get-report' => 'options'
+                    ]
+                ]
             ],
         ],
     ],

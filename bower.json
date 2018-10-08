@@ -1,8 +1,8 @@
 {
-    "name": "hrcb-api",
+    "name": "fd-api",
     "version": "0.0.0",
     "authors": [
-        "@dbix"
+        "@ccf"
     ],
     "description": "",
     "main": "",

@@ -16,29 +16,32 @@ use yii\web\IdentityInterface;
 /**
  * This is the model class for table "user".
  *
- * @property integer $id
- * @property integer $version
+ * @property int $id
+ * @property int $version
  * @property string $username
+ * @property string $name
+ * @property string $mobileNo
  * @property string $passwordHash
  * @property string $passwordExpiryDate
- * @property integer $passwordNeverExpires
- * @property string $email
- * @property integer $active
- * @property integer $locked
- * @property integer $userType
+ * @property int $passwordNeverExpires
+ * @property int $active
+ * @property int $locked
+ * @property int $userType
  * @property string $lastLoginAt
- * @property integer $tenantId
- * @property integer $supplierId
- * @property integer $createdBy
+ * @property int $agentId
+ * @property int $masterId
+ * @property int $createdBy
  * @property string $createdAt
- * @property integer $updatedBy
+ * @property int $updatedBy
  * @property string $updatedAt
  *
- * @property Tenant $tenant
- * @property UserProfile $userProfile
- * @property Supplier $supplier 
- * @property SupplierUserProfile $SupplierUserProfile
+ * @property User $agent
+ * @property Master $master
+ * @property UserDetail $userDetail
  * @property AuthAssignment[] $authAssignments
+ * @property User[] $players
+ * @property Bet[] $bets
+ * @property Bet[] $processedBets
  *
  * Non-persistent fields
  * @property string $password
@@ -68,37 +71,35 @@ class User extends ActiveRecord implements IdentityInterface
     public function rules()
     {
         return [
-            [['version', 'passwordNeverExpires', 'active', 'locked', 'userType', 'tenantId'], 'integer'],
-            [['username', 'passwordHash', 'email', 'active', 'userType'], 'required'],
+            [['version', 'agentId', 'masterId','passwordNeverExpires', 'active', 'locked', 'userType'], 'integer'],
+            [['username', 'name', 'passwordHash', 'active', 'userType'], 'required'],
             [['passwordExpiryDate', 'lastLoginAt'], 'safe'],
             [['username'], 'string', 'max' => 50],
-            [['passwordHash'], 'string', 'max' => 255],
-            [['email', 'password', 'confirmPassword'], 'string', 'max' => 100],
-            [['username', 'email'], 'trim'],
+            [['name', 'passwordHash'], 'string', 'max' => 255],
+            [['mobileNo'], 'string', 'max' => 20],
+            [['password', 'confirmPassword'], 'string', 'max' => 100],
+            [['username','name'], 'trim'],
             ['password', 'compare', 'compareAttribute' => 'confirmPassword', 'on' => ['changePassword', 'resetPassword']],
             [['username'], 'unique',
                 'targetAttribute' => ['username', 'userType'],
                 'message' => 'The specified username has already been taken.',
-                'when' => function ($model) {
+                'when' => function ($model)
+                {
                     return $model->userType == Yii::$app->params['USER']['TYPE']['ADMIN'];
                 }
             ],
             [['username'], 'unique',
-                'targetAttribute' => ['username', 'userType', 'tenantId'],
+                'targetAttribute' => ['username', 'userType', 'masterId'],
                 'message' => 'The specified username has already been taken.',
-                'when' => function ($model) {
-                    return $model->userType == Yii::$app->params['USER']['TYPE']['TENANT'];
+                'when' => function ($model)
+                {
+                    return ($model->userType == Yii::$app->params['USER']['TYPE']['MASTER']
+                        ||  $model->userType == Yii::$app->params['USER']['TYPE']['AGENT']
+                        ||  $model->userType == Yii::$app->params['USER']['TYPE']['PLAYER']);
                 }
             ],
-            [['username'], 'unique',
-                'targetAttribute' => ['username', 'userType', 'supplierId'],
-                'message' => 'The specified username has already been taken.',
-                'when' => function ($model) {
-                    return $model->userType == Yii::$app->params['USER']['TYPE']['SUPPLIER'];
-                }
-            ],
-            [['tenantId'], 'exist', 'skipOnError' => true, 'targetClass' => Tenant::class, 'targetAttribute' => ['tenantId' => 'id']],
-            [['supplierId'], 'exist', 'skipOnError' => true, 'targetClass' => Supplier::class, 'targetAttribute' => ['supplierId' => 'id']]
+            [['agentId'], 'exist', 'skipOnError' => true, 'targetClass' => User::class, 'targetAttribute' => ['agentId' => 'id']],
+            [['masterId'], 'exist', 'skipOnError' => true, 'targetClass' => Master::class, 'targetAttribute' => ['masterId' => 'id']],
         ];
     }
 
@@ -111,17 +112,19 @@ class User extends ActiveRecord implements IdentityInterface
             'id' => 'ID',
             'version' => 'Version',
             'username' => 'Username',
+            'name' => 'Name',
+            'mobileNo' => 'Mobile No',
             'passwordHash' => 'Password Hash',
             'password' => 'Password',
             'confirmPassword' => 'Confirm Password',
             'passwordExpiryDate' => 'Password Expiry Date',
             'passwordNeverExpires' => 'Password Never Expires',
-            'email' => 'Email',
             'active' => 'Active',
             'locked' => 'Locked',
             'userType' => 'User Type',
             'lastLoginAt' => 'Last Login At',
-            'tenantId' => 'Tenant ID',
+            'agentId' => 'Agent ID',
+            'masterId' => 'Master ID',
             'createdAt' => 'Created At',
             'createdBy' => 'Created By',
             'updatedAt' => 'Updated At',
@@ -145,30 +148,9 @@ class User extends ActiveRecord implements IdentityInterface
                 'class' => BlameableBehavior::class, //Automatically update the user id columns
                 'createdByAttribute' => 'createdBy',
                 'updatedByAttribute' => 'updatedBy',
-                'value' => [$this, 'blameableValue']
+                'defaultValue' => 1
             ],
         ];
-    }
-
-    public function blameableValue()
-    {
-        $userId = null;
-
-        if ($this->isNewRecord) {
-            if (Yii::$app->user->isGuest) {
-                $userId = 1; //Default to system administrator
-            } else {
-                $userId = Yii::$app->user->id;
-            }
-        } else {
-            if (Yii::$app->user->isGuest) {
-                return $this->updatedBy;
-            } else {
-                $userId = Yii::$app->user->id;
-            }
-        }
-
-        return $userId;
     }
 
     // filter out some fields, best used when you want to inherit the parent implementation
@@ -181,9 +163,11 @@ class User extends ActiveRecord implements IdentityInterface
         unset($fields['passwordHash']);
         unset($fields['password']);
         unset($fields['confirmPassword']);
+
         $fields['jwt'] = function ($model) {
             return $model->jwt;
         };
+
         $fields['roles'] = function ($model) {
             $roles = $model->getRoles($model->id);
             $rolesArray = array();
@@ -192,6 +176,7 @@ class User extends ActiveRecord implements IdentityInterface
             }
             return $rolesArray;
         };
+
         $fields['permissions'] = function ($model) {
             $permissions = $model->getPermissions($model->id);
             $permissionsArray = array();
@@ -200,41 +185,18 @@ class User extends ActiveRecord implements IdentityInterface
             }
             return $permissionsArray;
         };
-        $fields['supplier'] = function ($model) {
-            return $model->supplier;
-        };
-        $fields['supplierUserProfile'] = function ($model) {
-            return $model->supplierUserProfile;
-        };
-        $fields['userProfile'] = function ($model) {
-            return $model->userType == Yii::$app->params['USER']['TYPE']['SUPPLIER'] ? $model->supplierUserProfile : $model->userProfile;
-        };
-        $fields['department'] = function ($model) {
-            if (isset($model->userProfile)) {
-                return $model->userProfile->department;
+
+        $fields['master'] = function($model) {
+            if (!empty($model->master)) {
+                return $model->master;
             } else {
                 return null;
             }
         };
-        $fields['countryId'] = function ($model) {
-            if (isset($model->tenant)) {
-                return $model->tenant->countryId;
-            } elseif (isset($model->supplier)) {
-                return $model->supplier->countryId;
-            } else {
-                return null;
-            }
-        };
-        $fields['tenant'] = function($model) {
-            if (!empty($model->tenant)) {
-                return $model->tenant;
-            } else {
-                return null;
-            }
-        };
-        $fields['tenantConfigurations'] = function($model) {
-            if (!empty($model->tenant)) {
-                return $model->tenant->tenantConfigurations;
+
+        $fields['userDetail'] = function($model) {
+            if (!empty($model->userDetail)) {
+                return $model->userDetail;
             } else {
                 return null;
             }
@@ -254,33 +216,17 @@ class User extends ActiveRecord implements IdentityInterface
     /**
      * @return \yii\db\ActiveQuery
      */
-    public function getTenant()
+    public function getMaster()
     {
-        return $this->hasOne(Tenant::class, ['id' => 'tenantId']);
+        return $this->hasOne(Master::class, ['id' => 'masterId']);
     }
 
     /**
      * @return \yii\db\ActiveQuery
      */
-    public function getSupplier()
+    public function getUserDetail()
     {
-        return $this->hasOne(Supplier::class, ['id' => 'supplierId']);
-    }
-
-    /**
-     * @return \yii\db\ActiveQuery
-     */
-    public function getUserProfile()
-    {
-        return $this->hasOne(UserProfile::class, ['userId' => 'id']);
-    }
-
-    /**
-     * @return \yii\db\ActiveQuery
-     */
-    public function getSupplierUserProfile()
-    {
-        return $this->hasOne(SupplierUserProfile::class, ['userId' => 'id']);
+        return $this->hasOne(UserDetail::class, ['userId' => 'id']);
     }
 
     /**
@@ -353,43 +299,32 @@ class User extends ActiveRecord implements IdentityInterface
     }
 
     /**
-     * Finds user by username, userType (1 - admin; 2 - tenant; 3 - supplier)
+     * Finds user by username
      *
      * @param string $username , $userType
      * @return static|null
      */
-    public static function findByUsernameAndUserType($username, $userType = 1)
+    public static function findByUsername($username)
     {
-        return static::findOne(['username' => $username, 'userType' => $userType]);
+        return static::findOne(['username' => $username]);
     }
 
     /**
-     * Finds user by username, userType (1 - admin; 2 - tenant; 3 - supplier), tenantId
+     * Finds user by username, masterId
      *
      * @param string $username , $userType, $tenantId
      * @return static|null
      */
-    public static function findByUsernameAndUserTypeAndTenantId($username, $userType = 2, $tenantId)
+    public static function findByUsernameAndMasterId($username, $masterId)
     {
-        return static::findOne(['username' => $username, 'userType' => $userType, 'tenantId' => $tenantId]);
+        return static::findOne(['username' => $username, 'masterId' => $masterId]);
     }
 
     /**
-     * Finds user by username, userType (1 - admin; 2 - tenant; 3 - supplier), supplierId
+     * Finds user by rolename
      *
      * @param string $username , $userType, $tenantId
-     * @return static|null
-     */
-    public static function findByUsernameAndUserTypeAndSupplierId($username, $userType = 3, $supplierId)
-    {
-        return static::findOne(['username' => $username, 'userType' => $userType, 'supplierId' => $supplierId]);
-    }
-
-    /**
-     * Finds user by username, userType (1 - admin; 2 - tenant; 3 - supplier), tenantId
-     *
-     * @param string $username , $userType, $tenantId
-     * @return static|null
+     * @return array|null
      */
     public static function findUsersByRole($rolename, $active = true)
     {
@@ -413,6 +348,39 @@ class User extends ActiveRecord implements IdentityInterface
     {
         //return $this->auth_key;
         return null;
+    }
+
+    /**
+     * @return \yii\db\ActiveQuery
+     */
+    public function getAgent() //Get upline agent
+    {
+        return $this->hasOne(User::class, ['id' => 'agentId']);
+    }
+
+    /**
+     * @return \yii\db\ActiveQuery
+     */
+    public function getPlayers() //Get players under the agent
+    {
+        return $this->hasMany(User::class, ['agentId' => 'id']);
+    }
+
+    /**
+     * @return \yii\db\ActiveQuery
+     */
+    public function getBets() //Get associated bets
+    {
+        return $this->hasMany(Bet::class, ['createdBy' => 'id']);
+    }
+
+    /**
+     * @return \yii\db\ActiveQuery
+     */
+    public function getProcessedBets() //Get associated bets
+    {
+        return $this->hasMany(Bet::class, ['createdBy' => 'id'])
+            ->andOnCondition(['bet.status' => Yii::$app->params['BET']['STATUS']['PROCESSED']]);
     }
 
     /**
@@ -448,7 +416,7 @@ class User extends ActiveRecord implements IdentityInterface
 
     /**
      * Generate and return Json Web Token
-     * @return token string
+     * @return string
      */
     public function generateJWT()
     {

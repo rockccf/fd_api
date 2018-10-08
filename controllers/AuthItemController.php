@@ -4,7 +4,7 @@ namespace app\controllers;
 
 use app\models\AuthItem;
 use Yii;
-use app\components\dbix\CommonClass;
+use app\components\ccf\CommonClass;
 use yii\filters\AccessControl;
 use yii\filters\auth\HttpBearerAuth;
 use yii\filters\ContentNegotiator;
@@ -91,32 +91,29 @@ class AuthItemController extends ActiveController
                     'allow' => true,
                     'actions' => ['view'],
                     'roles' => [
-                        Yii::$app->params['AUTH_ITEM']['PERMISSION_PREFIX']['ADMIN'].'VIEW_ROLE',
-                        Yii::$app->params['AUTH_ITEM']['PERMISSION_PREFIX']['TENANT'].'VIEW_ROLE',
+                        'VIEW_ROLE',
                     ],
                 ],
                 [
                     'allow' => true,
                     'actions' => ['create'],
                     'roles' => [
-                        Yii::$app->params['AUTH_ITEM']['PERMISSION_PREFIX']['ADMIN'].'CREATE_ROLE',
-                        Yii::$app->params['AUTH_ITEM']['PERMISSION_PREFIX']['TENANT'].'CREATE_ROLE'
+                        'CREATE_ROLE',
+
                     ],
                 ],
                 [
                     'allow' => true,
                     'actions' => ['update'],
                     'roles' => [
-                        Yii::$app->params['AUTH_ITEM']['PERMISSION_PREFIX']['ADMIN'].'UPDATE_ROLE',
-                        Yii::$app->params['AUTH_ITEM']['PERMISSION_PREFIX']['TENANT'].'UPDATE_ROLE'
+                        'UPDATE_ROLE',
                     ],
                 ],
                 [
                     'allow' => true,
                     'actions' => ['delete'],
                     'roles' => [
-                        Yii::$app->params['AUTH_ITEM']['PERMISSION_PREFIX']['ADMIN'].'DELETE_ROLE',
-                        Yii::$app->params['AUTH_ITEM']['PERMISSION_PREFIX']['TENANT'].'DELETE_ROLE'
+                        'DELETE_ROLE',
                     ],
                 ]
             ],
@@ -155,13 +152,6 @@ class AuthItemController extends ActiveController
 
         $authItem = AuthItem::find();
         $where = null;
-        //If it's tenant, only allow to retrieve tenant related roles and permissions
-        if (Yii::$app->user->identity->userType == Yii::$app->params['USER']['TYPE']['TENANT']) {
-            $tenantRolePrefix = Yii::$app->params['AUTH_ITEM']['ROLE_PREFIX']['TENANT'].Yii::$app->user->identity->tenantId.'_';
-            $where = [
-                ['or like','name',[$tenantRolePrefix,Yii::$app->params['AUTH_ITEM']['PERMISSION_PREFIX']['TENANT']]],
-            ];
-        }
 
         return CommonClass::prepareActiveQueryDataProvider($params,$authItem,$where);
     }
@@ -177,12 +167,6 @@ class AuthItemController extends ActiveController
             $description = ucwords($name); // Capitalize each word (Hello World)
             $name = str_replace(' ', '_', $name); //Replace spaces with underscores
             $name = strtoupper($name); //Make it uppercase
-            if (Yii::$app->user->identity->userType == Yii::$app->params['USER']['TYPE']['TENANT']) {
-                $tenantRolePrefix = Yii::$app->params['AUTH_ITEM']['ROLE_PREFIX']['TENANT'] . Yii::$app->user->identity->tenantId . '_';
-                $roleName = $tenantRolePrefix . $name;
-            } else {
-                $roleName = Yii::$app->params['AUTH_ITEM']['ROLE_PREFIX']['ADMIN'] . '_' . $name;
-            }
 
             $authItem = new AuthItem;
             $dbTrans = AuthItem::getDb()->beginTransaction();
@@ -246,14 +230,6 @@ class AuthItemController extends ActiveController
             $name = strtoupper($name); //Make it uppercase
             $oldName = str_replace(' ','_',$oldName); //Replace spaces with underscores
             $oldName = strtoupper($oldName); //Make it uppercase
-            if (Yii::$app->user->identity->userType == Yii::$app->params['USER']['TYPE']['TENANT']) {
-                $tenantRolePrefix = Yii::$app->params['AUTH_ITEM']['ROLE_PREFIX']['TENANT'].Yii::$app->user->identity->tenantId.'_';
-                $oldRoleName = $tenantRolePrefix.$oldName;
-                $roleName = $tenantRolePrefix.$name;
-            } else {
-                $oldRoleName = Yii::$app->params['AUTH_ITEM']['ROLE_PREFIX']['ADMIN'].$oldName;
-                $roleName = Yii::$app->params['AUTH_ITEM']['ROLE_PREFIX']['ADMIN'].$name;
-            }
 
             $currentRole = $auth->getRole($oldRoleName);
             $authItem = AuthItem::findOne(['name' => $oldRoleName]);
