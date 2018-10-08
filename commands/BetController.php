@@ -934,28 +934,78 @@ class BetController extends Controller
             $bns = $bet->betNumbers;
             $totalSales = 0;
             foreach ($bns as $bn) {
-                $soldBig = $bn->soldBig;
-                $soldSmall = $bn->soldSmall;
-                $sold4a = $bn->sold4a;
-                $sold4b = $bn->sold4b;
-                $sold4c = $bn->sold4c;
-                $sold4d = $bn->sold4d;
-                $sold4e = $bn->sold4e;
-                $sold4f = $bn->sold4f;
-                $sold3abc = $bn->sold3abc;
-                $sold3a = $bn->sold3a;
-                $sold3b = $bn->sold3b;
-                $sold3c = $bn->sold3c;
-                $sold3d = $bn->sold3d;
-                $sold3e = $bn->sold3e;
-                $sold5d = $bn->sold5d;
-                $sold6d = $bn->sold6d;
-                $drawDatesCount = count($bn->drawDates);
+                $bds = $bn->betDetails;
+                $companyCodesCount = count($bn->companyCodes);
+                $drawDatesCount = 1; //drawDatesCount is set to 1 in this case because the results are always processed on a daily basis
+
+                $soldBig = null;
+                $soldSmall = null;
+                $sold4a  = null;
+                $sold4b  = null;
+                $sold4c  = null;
+                $sold4d  = null;
+                $sold4e  = null;
+                $sold4f  = null;
+                $sold3abc  = null;
+                $sold3a  = null;
+                $sold3b  = null;
+                $sold3c  = null;
+                $sold3d  = null;
+                $sold3e  = null;
+                $sold5d  = null;
+                $sold6d  = null;
+
+                if (!empty($bds) && is_array($bds)) {
+                    foreach ($bds as $bd) {
+                        $date = \DateTime::createFromFormat('Y-m-d', $drawDate);
+                        $date->setTime(0,0);
+                        $bdDrawDate = new \DateTime($bd->drawDate);
+                        $bdDrawDate->setTime(0,0);
+                        if ($bdDrawDate == $date) {
+                            if ($bd->status != Yii::$app->params['BET']['DETAIL']['STATUS']['REJECTED']) {
+                                $soldBig += $bd->big;
+                                $soldSmall += $bd->small;
+                                $sold4a += $bd->{'4a'};
+                                $sold4b += $bd->{'4b'};
+                                $sold4c += $bd->{'4c'};
+                                $sold4d += $bd->{'4d'};
+                                $sold4e += $bd->{'4e'};
+                                $sold4f += $bd->{'4f'};
+                                $sold3abc += $bd->{'3abc'};
+                                $sold3a += $bd->{'3a'};
+                                $sold3b += $bd->{'3b'};
+                                $sold3c += $bd->{'3c'};
+                                $sold3d += $bd->{'3d'};
+                                $sold3e += $bd->{'3e'};
+                                $sold5d += $bd->{'5d'};
+                                $sold6d += $bd->{'6d'};
+                            }
+                        }
+                    }
+                }
+
+                $soldBig = CommonClass::adjustSalesBet($soldBig,$bn->big*$companyCodesCount*$drawDatesCount);
+                $soldSmall = CommonClass::adjustSalesBet($soldSmall,$bn->small*$companyCodesCount*$drawDatesCount);
+                $sold4a = CommonClass::adjustSalesBet($sold4a,$bn->{'4a'}*$companyCodesCount*$drawDatesCount);
+                $sold4b = CommonClass::adjustSalesBet($sold4b,$bn->{'4b'}*$companyCodesCount*$drawDatesCount);
+                $sold4c = CommonClass::adjustSalesBet($sold4c,$bn->{'4c'}*$companyCodesCount*$drawDatesCount);
+                $sold4d = CommonClass::adjustSalesBet($sold4d,$bn->{'4d'}*$companyCodesCount*$drawDatesCount);
+                $sold4e = CommonClass::adjustSalesBet($sold4e,$bn->{'4e'}*$companyCodesCount*$drawDatesCount);
+                $sold4f = CommonClass::adjustSalesBet($sold4f,$bn->{'4f'}*$companyCodesCount*$drawDatesCount);
+                $sold3abc = CommonClass::adjustSalesBet($sold3abc,$bn->{'3abc'}*$companyCodesCount*$drawDatesCount);
+                $sold3a = CommonClass::adjustSalesBet($sold3a,$bn->{'3a'}*$companyCodesCount*$drawDatesCount);
+                $sold3b = CommonClass::adjustSalesBet($sold3b,$bn->{'3b'}*$companyCodesCount*$drawDatesCount);
+                $sold3c = CommonClass::adjustSalesBet($sold3c,$bn->{'3c'}*$companyCodesCount*$drawDatesCount);
+                $sold3d = CommonClass::adjustSalesBet($sold3d,$bn->{'3d'}*$companyCodesCount*$drawDatesCount);
+                $sold3e = CommonClass::adjustSalesBet($sold3e,$bn->{'3e'}*$companyCodesCount*$drawDatesCount);
+                $sold5d = CommonClass::adjustSalesBet($sold5d,$bn->{'5d'}*$companyCodesCount*$drawDatesCount);
+                $sold6d = CommonClass::adjustSalesBet($sold6d,$bn->{'6d'}*$companyCodesCount*$drawDatesCount);
 
                 $totalSales += $soldBig+$soldSmall+$sold4a+$sold4b+$sold4c+$sold4d+$sold4e+$sold4f;
                 $totalSales += $sold3abc+$sold3a+$sold3b+$sold3c+$sold3d+$sold3e;
                 $totalSales += $sold5d+$sold6d;
             }
+
             $bet->totalWin += $grandTotalWin;
             //Make sure all the betDetails under the bet are processed
             $oustandingBdCount = BetDetail::find()

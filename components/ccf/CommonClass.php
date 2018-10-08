@@ -629,6 +629,17 @@ class CommonClass extends BaseObject
         return $result;
     }
 
+    /*
+     * If it falls under acceptable error, set it to be bet amount so it will be consistent with the bet amount
+     */
+    public static function adjustSalesBet($sales,$bet) {
+        $sales = round($sales,2);
+        if (abs($sales-$bet) <= Yii::$app->params['GLOBAL']['BET_AMOUNT_ACCEPTABLE_ERROR']) {
+            $sales = $bet;
+        }
+        return $sales;
+    }
+
     public static function validateDate($date, $format = 'd/m/Y')
     {
         $d = \DateTime::createFromFormat($format, $date);

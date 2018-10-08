@@ -29,7 +29,7 @@ class ReportClass extends BaseObject
             //Get all the agents under the master
             $agents = User::findAll(['masterId'=>Yii::$app->user->identity->masterId,'userType'=>Yii::$app->params['USER']['TYPE']['AGENT']]);
             $grandTotalUserSales = $grandTotalUserCommission = $grandTotalUserPayout = $grandTotalCollect = $grandTotalExtraCommission = 0;
-            $grandTotalCompanySales = $grandTotalCompanyCommission = $grandTotalCompanyPayout = $grandTotalCompanyBalance = 0;
+            $grandTotalCompanySales = $grandTotalCompanyCommission = $grandTotalCompanySuperiorCommission = $grandTotalCompanyPayout = $grandTotalCompanyBalance = 0;
             foreach ($agents as $agent) {
                 //Calculate own account first
                 $userTotalSales = $userTotalOwnCommission = $userTotalExtraCommission = $userTotalCommission = $userTotalWin = 0;
@@ -93,6 +93,7 @@ class ReportClass extends BaseObject
                     $userTotalOwnCommission = 0;
                     $userTotalExtraCommission = 0;
                     $userTotalCommission = 0;
+                    $userTotalSuperiorCommission = 0;
                     $userTotalWin = 0;
 
                     $betDetails = BetDetail::find()
@@ -106,10 +107,12 @@ class ReportClass extends BaseObject
                         $ownCommission = $betDetail->ownCommission;
                         $extraCommission = $betDetail->extraCommission;
                         $totalWin = $betDetail->totalWin;
+                        $superiorCommission = $betDetail->totalSuperiorCommission;
 
                         $userTotalSales += $totalSales;
                         $userTotalOwnCommission += $ownCommission;
                         $userTotalExtraCommission += $extraCommission;
+                        $userTotalSuperiorCommission += $superiorCommission;
                         $userTotalCommission = $userTotalOwnCommission+$userTotalExtraCommission;
                         $userTotalWin += $totalWin;
                     }
@@ -117,9 +120,10 @@ class ReportClass extends BaseObject
                     $userTotalCollect = $userTotalWin+$userTotalOwnCommission-$userTotalSales;
                     $companyTotalSales = $userTotalSales;
                     $companyTotalCommission = $userTotalCommission;
+                    $companyTotalSuperiorCommission = $userTotalSuperiorCommission;
                     $companyTotalPayout = $userTotalWin;
 
-                    $companyTotalBalance = $userTotalSales-$userTotalCommission-$userTotalWin;
+                    $companyTotalBalance = $userTotalSales-$userTotalCommission-$companyTotalSuperiorCommission-$userTotalWin;
                     $companyTotalBalance = $companyTotalBalance*-1;
 
                     $rowArray[] = [
@@ -132,6 +136,7 @@ class ReportClass extends BaseObject
                         "extraCommission" => $userTotalExtraCommission,
                         "companySales" => $companyTotalSales,
                         "companyCommission" => $companyTotalCommission,
+                        "superiorCommission" => $companyTotalSuperiorCommission,
                         "companyPayout" => $companyTotalPayout,
                         "balance" => $companyTotalBalance,
                     ];
@@ -143,6 +148,7 @@ class ReportClass extends BaseObject
                     $grandTotalExtraCommission += $userTotalExtraCommission;
                     $grandTotalCompanySales += $companyTotalSales;
                     $grandTotalCompanyCommission += $companyTotalCommission;
+                    $grandTotalCompanySuperiorCommission += $companyTotalSuperiorCommission;
                     $grandTotalCompanyPayout += $companyTotalPayout;
                     $grandTotalCompanyBalance += $companyTotalBalance;
                 }
@@ -155,11 +161,12 @@ class ReportClass extends BaseObject
             $result["grandTotalExtraCommission"] = $grandTotalExtraCommission;
             $result["grandTotalCompanySales"] = $grandTotalCompanySales;
             $result["grandTotalCompanyCommission"] = $grandTotalCompanyCommission;
+            $result["grandTotalCompanySuperiorCommission"] = $grandTotalCompanySuperiorCommission;
             $result["grandTotalCompanyPayout"] = $grandTotalCompanyPayout;
             $result["grandTotalCompanyBalance"] = $grandTotalCompanyBalance;
         } else if (Yii::$app->user->identity->userType == Yii::$app->params['USER']['TYPE']['AGENT']) {
             $grandTotalUserSales = $grandTotalUserCommission = $grandTotalUserPayout = $grandTotalCollect = $grandTotalExtraCommission = 0;
-            $grandTotalCompanySales = $grandTotalCompanyCommission = $grandTotalCompanyPayout = $grandTotalCompanyBalance = 0;
+            $grandTotalCompanySales = $grandTotalCompanyCommission = $grandTotalCompanySuperiorCommission = $grandTotalCompanyPayout = $grandTotalCompanyBalance = 0;
 
             //Calculate own account first
             $userTotalSales = $userTotalOwnCommission = $userTotalExtraCommission = $userTotalCommission = $userTotalWin = 0;
@@ -223,6 +230,7 @@ class ReportClass extends BaseObject
                 $userTotalOwnCommission = 0;
                 $userTotalExtraCommission = 0;
                 $userTotalCommission = 0;
+                $userTotalSuperiorCommission = 0;
                 $userTotalWin = 0;
 
                 $betDetails = BetDetail::find()
@@ -236,10 +244,12 @@ class ReportClass extends BaseObject
                     $ownCommission = $betDetail->ownCommission;
                     $extraCommission = $betDetail->extraCommission;
                     $totalWin = $betDetail->totalWin;
+                    $superiorCommission = $betDetail->totalSuperiorCommission;
 
                     $userTotalSales += $totalSales;
                     $userTotalOwnCommission += $ownCommission;
                     $userTotalExtraCommission += $extraCommission;
+                    $userTotalSuperiorCommission += $superiorCommission;
                     $userTotalCommission = $userTotalOwnCommission+$userTotalExtraCommission;
                     $userTotalWin += $totalWin;
                 }
@@ -247,9 +257,10 @@ class ReportClass extends BaseObject
                 $userTotalCollect = $userTotalWin+$userTotalOwnCommission-$userTotalSales;
                 $companyTotalSales = $userTotalSales;
                 $companyTotalCommission = $userTotalCommission;
+                $companyTotalSuperiorCommission = $userTotalSuperiorCommission;
                 $companyTotalPayout = $userTotalWin;
 
-                $companyTotalBalance = $userTotalSales-$userTotalCommission-$userTotalWin;
+                $companyTotalBalance = $userTotalSales-$userTotalCommission-$companyTotalSuperiorCommission-$userTotalWin;
                 $companyTotalBalance = $companyTotalBalance*-1;
 
                 $rowArray[] = [
@@ -262,6 +273,7 @@ class ReportClass extends BaseObject
                     "extraCommission" => $userTotalExtraCommission,
                     "companySales" => $companyTotalSales,
                     "companyCommission" => $companyTotalCommission,
+                    "superiorCommission" => $companyTotalSuperiorCommission,
                     "companyPayout" => $companyTotalPayout,
                     "balance" => $companyTotalBalance,
                 ];
@@ -273,6 +285,7 @@ class ReportClass extends BaseObject
                 $grandTotalExtraCommission += $userTotalExtraCommission;
                 $grandTotalCompanySales += $companyTotalSales;
                 $grandTotalCompanyCommission += $companyTotalCommission;
+                $grandTotalCompanySuperiorCommission += $companyTotalSuperiorCommission;
                 $grandTotalCompanyPayout += $companyTotalPayout;
                 $grandTotalCompanyBalance += $companyTotalBalance;
             }
@@ -284,6 +297,7 @@ class ReportClass extends BaseObject
             $result["grandTotalExtraCommission"] = $grandTotalExtraCommission;
             $result["grandTotalCompanySales"] = $grandTotalCompanySales;
             $result["grandTotalCompanyCommission"] = $grandTotalCompanyCommission;
+            $result["grandTotalCompanySuperiorCommission"] = $grandTotalCompanySuperiorCommission;
             $result["grandTotalCompanyPayout"] = $grandTotalCompanyPayout;
             $result["grandTotalCompanyBalance"] = $grandTotalCompanyBalance;
         } else if (Yii::$app->user->identity->userType == Yii::$app->params['USER']['TYPE']['PLAYER']) {

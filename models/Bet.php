@@ -476,7 +476,7 @@ class Bet extends \yii\db\ActiveRecord
             if ($betNumber->betOption == Yii::$app->params['BET']['NUMBER']['OPTION']['SINGLE']) {
                 $result .= $betNumber->number."($stat) =$betAmountString\n";
             } else if ($betNumber->betOption == Yii::$app->params['BET']['NUMBER']['OPTION']['RETURN']) {
-                $result .= "*".$betNumber->number."*($stat) =$betAmountString\n";
+                $result .= "R*".$betNumber->number."($stat) =$betAmountString\n";
             } else if ($betNumber->betOption == Yii::$app->params['BET']['NUMBER']['OPTION']['BOX']) {
                 $result .= "B*".$betNumber->number."($stat) =$betAmountString\n";
             } else if ($betNumber->betOption == Yii::$app->params['BET']['NUMBER']['OPTION']['IBOX']) {

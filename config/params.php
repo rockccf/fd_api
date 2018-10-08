@@ -18,6 +18,7 @@ if (YII_ENV_PROD) {
 
 return [
     'GLOBAL' => [
+        'API_VERSION' => '1.0.0',//API Release Version
         'TOKEN_VALIDITY' => 86400,
         'SERVER_NAME' => $serverName,
         'SECRET_KEY' => 'gkFjY/HfejuhrECU4TZkF1V5ABqfeT+EyZYwxfu/fodWUcO31DXM1A2YkFJj4p70GULv9yv014nnZPJBYDleiQ==',
@@ -33,7 +34,7 @@ return [
         'ALLOWED_REQUEST_HEADERS' => ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization', 'If-Modified-Since', 'Cache-Control', 'Pragma'],
         'PORTAL_URL' => $portalUrl,
         'BET_VOID_ALLOW_MINUTES' => 5,
-        'BET_AMOUNT_ACCEPTABLE_ERROR_CENTS' => 2
+        'BET_AMOUNT_ACCEPTABLE_ERROR' => 0.1
     ],
     'FORMAT' => [
         'DATETIME' => 'd-m-Y H:i:s',

@@ -321,6 +321,17 @@ class BetController extends ActiveController
                 $bn->drawDates = $betFormRow["drawDateArray"];
                 $totalBet = $big+$small+$amount4a+$amount4b+$amount4c+$amount4d+$amount4e+$amount4f;
                 $totalBet += $amount3abc+$amount3a+$amount3b+$amount3c+$amount3d+$amount3e+$amount5d+$amount6d;
+                if ($bn->betOption == Yii::$app->params['BET']['NUMBER']['OPTION']['RETURN']) {
+                    $totalBet = $totalBet * 2;
+                } else if ($bn->betOption == Yii::$app->params['BET']['NUMBER']['OPTION']['BOX']) {
+                    $numbers = [];
+                    self::permute($number,0,strlen($number)-1,$numbers);
+                    $totalBet = $totalBet * count($numbers);
+                } else if ($bn->betOption == Yii::$app->params['BET']['NUMBER']['OPTION']['PH']) {
+                    $woFirstDigitArray = [];
+                    self::permute(substr($number,1),0,strlen(substr($number,1))-1,$woFirstDigitArray);
+                    $totalBet = $totalBet * count($woFirstDigitArray);
+                }
                 $totalBet = $totalBet * count($companyCodes) * count($betFormRow["drawDateArray"]);
                 $bn->totalBet = $totalBet;
                 $bn->betId = $betModel->id;
@@ -550,22 +561,22 @@ class BetController extends ActiveController
                     $bn->status = Yii::$app->params['BET']['NUMBER']['STATUS']['REJECTED'];
                 }
 
-                $soldBig = self::adjustSalesBet($soldBig,$bn->big*$companyCodesCount*$drawDatesCount);
-                $soldSmall = self::adjustSalesBet($soldSmall,$bn->small*$companyCodesCount*$drawDatesCount);
-                $sold4a = self::adjustSalesBet($sold4a,$bn->{'4a'}*$companyCodesCount*$drawDatesCount);
-                $sold4b = self::adjustSalesBet($sold4b,$bn->{'4b'}*$companyCodesCount*$drawDatesCount);
-                $sold4c = self::adjustSalesBet($sold4c,$bn->{'4c'}*$companyCodesCount*$drawDatesCount);
-                $sold4d = self::adjustSalesBet($sold4d,$bn->{'4d'}*$companyCodesCount*$drawDatesCount);
-                $sold4e = self::adjustSalesBet($sold4e,$bn->{'4e'}*$companyCodesCount*$drawDatesCount);
-                $sold4f = self::adjustSalesBet($sold4f,$bn->{'4f'}*$companyCodesCount*$drawDatesCount);
-                $sold3abc = self::adjustSalesBet($sold3abc,$bn->{'3abc'}*$companyCodesCount*$drawDatesCount);
-                $sold3a = self::adjustSalesBet($sold3a,$bn->{'3a'}*$companyCodesCount*$drawDatesCount);
-                $sold3b = self::adjustSalesBet($sold3b,$bn->{'3b'}*$companyCodesCount*$drawDatesCount);
-                $sold3c = self::adjustSalesBet($sold3c,$bn->{'3c'}*$companyCodesCount*$drawDatesCount);
-                $sold3d = self::adjustSalesBet($sold3d,$bn->{'3d'}*$companyCodesCount*$drawDatesCount);
-                $sold3e = self::adjustSalesBet($sold3e,$bn->{'3e'}*$companyCodesCount*$drawDatesCount);
-                $sold5d = self::adjustSalesBet($sold5d,$bn->{'5d'}*$companyCodesCount*$drawDatesCount);
-                $sold6d = self::adjustSalesBet($sold6d,$bn->{'6d'}*$companyCodesCount*$drawDatesCount);
+                $soldBig = CommonClass::adjustSalesBet($soldBig,$bn->big*$companyCodesCount*$drawDatesCount);
+                $soldSmall = CommonClass::adjustSalesBet($soldSmall,$bn->small*$companyCodesCount*$drawDatesCount);
+                $sold4a = CommonClass::adjustSalesBet($sold4a,$bn->{'4a'}*$companyCodesCount*$drawDatesCount);
+                $sold4b = CommonClass::adjustSalesBet($sold4b,$bn->{'4b'}*$companyCodesCount*$drawDatesCount);
+                $sold4c = CommonClass::adjustSalesBet($sold4c,$bn->{'4c'}*$companyCodesCount*$drawDatesCount);
+                $sold4d = CommonClass::adjustSalesBet($sold4d,$bn->{'4d'}*$companyCodesCount*$drawDatesCount);
+                $sold4e = CommonClass::adjustSalesBet($sold4e,$bn->{'4e'}*$companyCodesCount*$drawDatesCount);
+                $sold4f = CommonClass::adjustSalesBet($sold4f,$bn->{'4f'}*$companyCodesCount*$drawDatesCount);
+                $sold3abc = CommonClass::adjustSalesBet($sold3abc,$bn->{'3abc'}*$companyCodesCount*$drawDatesCount);
+                $sold3a = CommonClass::adjustSalesBet($sold3a,$bn->{'3a'}*$companyCodesCount*$drawDatesCount);
+                $sold3b = CommonClass::adjustSalesBet($sold3b,$bn->{'3b'}*$companyCodesCount*$drawDatesCount);
+                $sold3c = CommonClass::adjustSalesBet($sold3c,$bn->{'3c'}*$companyCodesCount*$drawDatesCount);
+                $sold3d = CommonClass::adjustSalesBet($sold3d,$bn->{'3d'}*$companyCodesCount*$drawDatesCount);
+                $sold3e = CommonClass::adjustSalesBet($sold3e,$bn->{'3e'}*$companyCodesCount*$drawDatesCount);
+                $sold5d = CommonClass::adjustSalesBet($sold5d,$bn->{'5d'}*$companyCodesCount*$drawDatesCount);
+                $sold6d = CommonClass::adjustSalesBet($sold6d,$bn->{'6d'}*$companyCodesCount*$drawDatesCount);
                 
                 $bn->soldBig = $soldBig;
                 $bn->soldSmall = $soldSmall;
@@ -1256,16 +1267,5 @@ class BetController extends ActiveController
         $charArray[$i] = $charArray[$j];
         $charArray[$j] = $temp;
         return implode($charArray);
-    }
-
-    /*
-     * If it falls under acceptable error, set it to be bet amount so it will be consistent with the bet amount
-     */
-    private function adjustSalesBet($sales,$bet) {
-        $sales = round($sales,2);
-        if (abs($sales-$bet) <= Yii::$app->params['GLOBAL']['BET_AMOUNT_ACCEPTABLE_ERROR_CENTS']) {
-            $sales = $bet;
-        }
-        return $sales;
     }
 }
