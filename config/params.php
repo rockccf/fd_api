@@ -18,7 +18,7 @@ if (YII_ENV_PROD) {
 
 return [
     'GLOBAL' => [
-        'API_VERSION' => '1.1.0',//API Release Version
+        'API_VERSION' => '1.1.1',//API Release Version
         'TOKEN_VALIDITY' => 86400,
         'SERVER_NAME' => $serverName,
         'SECRET_KEY' => 'gkFjY/HfejuhrECU4TZkF1V5ABqfeT+EyZYwxfu/fodWUcO31DXM1A2YkFJj4p70GULv9yv014nnZPJBYDleiQ==',

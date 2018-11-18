@@ -54,7 +54,7 @@ class ReportClass extends BaseObject
                     $userTotalWin += $totalWin;
                 }
 
-                $userTotalCollect = $userTotalWin+$userTotalOwnCommission-$userTotalSales;
+                $userTotalCollect = $userTotalWin+$userTotalOwnCommission+$userTotalExtraCommission-$userTotalSales;
                 $companyTotalSales = $userTotalSales;
                 $companyTotalCommission = $userTotalCommission;
                 $companyTotalPayout = $userTotalWin;
@@ -117,7 +117,7 @@ class ReportClass extends BaseObject
                         $userTotalWin += $totalWin;
                     }
 
-                    $userTotalCollect = $userTotalWin+$userTotalOwnCommission-$userTotalSales;
+                    $userTotalCollect = $userTotalWin+$userTotalOwnCommission+$userTotalExtraCommission-$userTotalSales;
                     $companyTotalSales = $userTotalSales;
                     $companyTotalCommission = $userTotalCommission;
                     $companyTotalSuperiorCommission = $userTotalSuperiorCommission;
@@ -196,7 +196,7 @@ class ReportClass extends BaseObject
             $companyTotalCommission = $userTotalCommission;
             $companyTotalPayout = $userTotalWin;
 
-            $companyTotalBalance = $userTotalSales-$userTotalCommission-$userTotalWin;
+            $companyTotalBalance = $userTotalSales-$userTotalCommission+$userTotalExtraCommission-$userTotalWin;
             $companyTotalBalance = $companyTotalBalance*-1;
 
             $rowArray[] = [
@@ -254,7 +254,7 @@ class ReportClass extends BaseObject
                     $userTotalWin += $totalWin;
                 }
 
-                $userTotalCollect = $userTotalWin+$userTotalOwnCommission-$userTotalSales;
+                $userTotalCollect = $userTotalWin+$userTotalOwnCommission+$userTotalExtraCommission-$userTotalSales;
                 $companyTotalSales = $userTotalSales;
                 $companyTotalCommission = $userTotalCommission;
                 $companyTotalSuperiorCommission = $userTotalSuperiorCommission;

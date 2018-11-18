@@ -246,9 +246,9 @@ class BetController extends ActiveController
         $extraGdCommRate = $betModel->extraGdCommRate;
         $totalGdCommRate = $betModel->{'gdCommRate'}+$betModel->extraGdCommRate;
 
-        $superior4dCommRate = $betModel->superior4dCommRate-$betModel->{'4dCommRate'};
-        $superior6dCommRate = $betModel->superior6dCommRate-$betModel->{'6dCommRate'};
-        $superiorGdCommRate = $betModel->superiorGdCommRate-$betModel->{'gdCommRate'};
+        $superior4dCommRate = $betModel->superior4dCommRate-$total4dCommRate;
+        $superior6dCommRate = $betModel->superior6dCommRate-$total6dCommRate;
+        $superiorGdCommRate = $betModel->superiorGdCommRate-$totalGdCommRate;
 
         $dbTrans = Bet::getDb()->beginTransaction();
         try {
@@ -670,6 +670,7 @@ class BetController extends ActiveController
             ->all();
 
         $voidCount = 0;
+        $totalVoid = 0;
         foreach ($bds as $bd) {
             $bd->status = Yii::$app->params['BET']['DETAIL']['STATUS']['VOIDED'];
             $bd->voidDate = new Expression('NOW()');
@@ -677,8 +678,21 @@ class BetController extends ActiveController
                 Yii::error($bd->errors);
                 return $bd;
             }
+            $totalVoid += $bd->totalSales;
             $voidCount++;
         }
+
+        if ($totalVoid > 0) {
+            $totalVoid = round($totalVoid,2);
+            //Proceed to update the user balance
+            $userDetail = UserDetail::findOne(['userId'=>Yii::$app->user->identity->getId()]);
+            $userDetail->outstandingBet -= $totalVoid;
+            if (!$userDetail->save()) {
+                Yii::error($userDetail->errors);
+                return $userDetail;
+            }
+        }
+
 
         $betIdCount = count($voidArray);
         $result = ["betIdCount"=>$betIdCount,"voidCount"=>$voidCount,"betDetailIdArray"=>$voidArray];
