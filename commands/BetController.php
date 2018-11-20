@@ -21,37 +21,6 @@ class BetController extends Controller
 {
     //Use web scraper to get the company draw results
     public function actionIndex($drawDate = null) {
-        $client = new Client();
-
-        /*
-         * http://www.win4d.com.my
-         */
-        //Check for Magnum/Toto/PMP/Sabah/Sandakan/Sarawak/Singapore 4D and Toto 5D 6D
-        $crawler = $client->request('GET', 'http://www.win4d.com.my/');
-        //$mCompleted = $pCompleted = $tCompleted = $sCompleted = $bCompleted = $kCompleted = $wCompleted = false;
-
-        /*$contentArray = $crawler->filter('div.panel-heading');
-        $companyCodeArray = [];
-        foreach ($contentArray as $content) {
-            $nodeValue = $content->nodeValue;
-
-            if (strpos($nodeValue,'Magnum') !== false) {
-                $companyCodeArray[] = Yii::$app->params['COMPANY']['CODE']['MAGNUM'];
-            } else if (strpos($nodeValue,'PMP') !== false) {
-                $companyCodeArray[] = Yii::$app->params['COMPANY']['CODE']['PMP'];
-            } else if (strpos($nodeValue,'TOTO') !== false) {
-                $companyCodeArray[] = Yii::$app->params['COMPANY']['CODE']['TOTO'];
-            } else if (strpos($nodeValue,'Singapore') !== false) {
-                $companyCodeArray[] = Yii::$app->params['COMPANY']['CODE']['SINGAPORE'];
-            } else if (strpos($nodeValue,'Sabah') !== false) {
-                $companyCodeArray[] = Yii::$app->params['COMPANY']['CODE']['SABAH'];
-            } else if (strpos($nodeValue,'Sandakan') !== false) {
-                $companyCodeArray[] = Yii::$app->params['COMPANY']['CODE']['SANDAKAN'];
-            } else if (strpos($nodeValue,'Cash') !== false) { //Sarawak
-                $companyCodeArray[] = Yii::$app->params['COMPANY']['CODE']['SARAWAK'];
-            }
-        }*/
-
         if (empty($drawDate)) {
             $drawDate = new \DateTime();
         } else {
@@ -79,297 +48,71 @@ class BetController extends Controller
         $sabahArray["code"] = Yii::$app->params['COMPANY']['CODE']['SABAH'];
         $sandakanArray["code"] = Yii::$app->params['COMPANY']['CODE']['SANDAKAN'];
         $sarawakArray["code"] = Yii::$app->params['COMPANY']['CODE']['SARAWAK'];
-
-        $dates = $crawler->filter('b.f_16'); //Draw dates for all the companies except 5d/6d
-        $validDatesCount = 0;
-        $i = 0;
-        foreach ($dates as $dateObj) {
-            $i++;
-            $value = trim($dateObj->nodeValue);
-            $value = preg_replace('/\xc2\xa0/','',$value); //Replace non breaking space
-            $value = preg_replace('/[\s\+]/', '', $value); //Replace plus sign
-            $value = substr($value,-10);
-            if (empty($value)) {
-                Yii::error("dateObj, value is empty. i = $i");
-                return ExitCode::SOFTWARE;
-            }
-            if (!CommonClass::validateDate($value)) {
-                Yii::error("dateObj, invalid date. i = $i, value = $value");
-                continue;
-            }
-
-            if ($specialDraw && $i == 6) { //if it's singapore and it's special draw (tuesday), ignore singapore results
-                continue;
-            }
-
-            $date = \DateTime::createFromFormat('d/m/Y', $value);
-            $date->setTime(0,0);
-            if ($date != $drawDate) {
-                Yii::error("dateObj, date is not the same as drawDate. i = $i, value = $value");
-                return ExitCode::SOFTWARE;
-            }
-
-            $validDatesCount++;
-        }
-
-        if ($specialDraw) { //Make sure there are 8 dates found (singapore is excluded on special draws)
-            if ($validDatesCount != 8) {
-                Yii::error("dates, $validDatesCount dates found.");
-                return ExitCode::SOFTWARE;
-            }
-        } else { //Make sure there are 9 dates found
-            if ($validDatesCount != 9) {
-                Yii::error("dates, $validDatesCount dates found.");
-                return ExitCode::SOFTWARE;
-            }
-        }
-
-
-        $sixdDate = $crawler->filter('td.resultdrawdate'); //Draw date for toto 5d/6d
-        $validDatesCount = 0;
-        foreach ($sixdDate as $sixdDateObj) {
-            $i++;
-            $value = trim($sixdDateObj->nodeValue);
-            $value = preg_replace('/\xc2\xa0/','',$value); //Replace non breaking space
-            $value = preg_replace('/[\s\+]/', '', $value); //Replace plus sign
-            $value = substr($value,-10);
-            if (empty($value)) {
-                Yii::error("sixdDateObj, value is empty. i = $i");
-                return ExitCode::SOFTWARE;
-            }
-            if (!CommonClass::validateDate($value)) {
-                Yii::error("sixdDateObj, invalid date. i = $i, value = $value");
-                continue;
-            }
-            $date = \DateTime::createFromFormat('d/m/Y', $value);
-            $date->setTime(0,0);
-            if ($date != $drawDate) {
-                Yii::error("sixdDateObj, date is not the same as drawDate. i = $i, value = $value");
-                return ExitCode::SOFTWARE;
-            }
-            $validDatesCount++;
-        }
-        //Make sure there's 1 date found
-        if ($validDatesCount != 1) {
-            Yii::error("sixdDate, $validDatesCount dates found.");
-            return ExitCode::SOFTWARE;
-        }
-
-        $drawDate = $drawDate->format('Y-m-d');
-
-        $fstNumbers = $crawler->filter('th.f_40'); //First, Second, and Third Prize Numbers
-        $i = 0;
-        foreach ($fstNumbers as $fstNumber) {
-            $value = trim($fstNumber->nodeValue);
-            $value = preg_replace('/\xc2\xa0/','',$value); //Replace non breaking space
-            $value = preg_replace('/[\s\+]/', '', $value); //Replace plus sign
-            if (empty($value)) {
-                Yii::error("fstNumber, value is empty. i = $i");
-                return ExitCode::SOFTWARE;
-            }
-            switch ($i) {
-                case 0:
-                    $magnumArray["1st"] = $value;
-                    break;
-                case 1:
-                    $magnumArray["2nd"] = $value;
-                    break;
-                case 2:
-                    $magnumArray["3rd"] = $value;
-                    break;
-                case 3:
-                    $pmpArray["1st"] = $value;
-                    break;
-                case 4:
-                    $pmpArray["2nd"] = $value;
-                    break;
-                case 5:
-                    $pmpArray["3rd"] = $value;
-                    break;
-                case 6:
-                    $totoArray["1st"] = $value;
-                    break;
-                case 7:
-                    $totoArray["2nd"] = $value;
-                    break;
-                case 8:
-                    $totoArray["3rd"] = $value;
-                    break;
-                case 9:
-                    $singaporeArray["1st"] = $value;
-                    break;
-                case 10:
-                    $singaporeArray["2nd"] = $value;
-                    break;
-                case 11:
-                    $singaporeArray["3rd"] = $value;
-                    break;
-                case 12:
-                    $sarawakArray["1st"] = $value;
-                    break;
-                case 13:
-                    $sarawakArray["2nd"] = $value;
-                    break;
-                case 14:
-                    $sarawakArray["3rd"] = $value;
-                    break;
-                case 15:
-                    $sandakanArray["1st"] = $value;
-                    break;
-                case 16:
-                    $sandakanArray["2nd"] = $value;
-                    break;
-                case 17:
-                    $sandakanArray["3rd"] = $value;
-                    break;
-                case 18:
-                    $sabahArray["1st"] = $value;
-                    break;
-                case 19:
-                    $sabahArray["2nd"] = $value;
-                    break;
-                case 20:
-                    $sabahArray["3rd"] = $value;
-                    break;
-            }
-            $i++;
-        }
-
-        $specialConNumbers = $crawler->filter('tr.f_20 > td'); //Special & Consolation Prize Numbers
-        $i = 0;
-        foreach ($specialConNumbers as $specialConNumber) {
-            $value = trim($specialConNumber->nodeValue);
-            $value = preg_replace('/\xc2\xa0/','',$value); //Replace non breaking space
-            $value = preg_replace('/[\s\+]/', '', $value); //Replace plus sign
-            if (empty($value)) {
-                Yii::error("specialConNumber, value is empty. i = $i");
-                return ExitCode::SOFTWARE;
-            }
-            switch (true) {
-                case ($i <= 9):
-                    $magnumArray["specialArray"][] = $value;
-                    break;
-                case ($i <= 19):
-                    $magnumArray["consoArray"][] = $value;
-                    break;
-                case ($i <= 29):
-                    $pmpArray["specialArray"][] = $value;
-                    break;
-                case ($i <= 39):
-                    $pmpArray["consoArray"][] = $value;
-                    break;
-                case ($i <= 49):
-                    $totoArray["specialArray"][] = $value;
-                    break;
-                case ($i <= 59):
-                    $totoArray["consoArray"][] = $value;
-                    break;
-                case ($i <= 69):
-                    $singaporeArray["specialArray"][] = $value;
-                    break;
-                case ($i <= 79):
-                    $singaporeArray["consoArray"][] = $value;
-                    break;
-                case ($i <= 89):
-                    $sarawakArray["specialArray"][] = $value;
-                    break;
-                case ($i <= 99):
-                    $sarawakArray["consoArray"][] = $value;
-                    break;
-                case ($i <= 109):
-                    $sandakanArray["specialArray"][] = $value;
-                    break;
-                case ($i <= 119):
-                    $sandakanArray["consoArray"][] = $value;
-                    break;
-                case ($i <= 129):
-                    $sabahArray["specialArray"][] = $value;
-                    break;
-                case ($i <= 139):
-                    $sabahArray["consoArray"][] = $value;
-                    break;
-            }
-            $i++;
-        }
-
         $toto5dArray["code"] = "T5";
         $toto6dArray["code"] = "T6";
-        $toto5d6dNumbers = $crawler->filter('td.resultbottom'); //5D 6D numbers
-        $i = 0;
-        foreach ($toto5d6dNumbers as $toto5d6dNumber) {
-            $value = trim($toto5d6dNumber->nodeValue);
-            $value = preg_replace('/\xc2\xa0/','',$value); //Replace non breaking space
-            $value = preg_replace('/[\s\+]/', '', $value); //Replace plus sign
-            if (empty($value)) {
-                Yii::error("toto5d6dNumber, value is empty. i = $i");
-                return ExitCode::SOFTWARE;
+
+        $i = 1;
+        while ($i <= 3) {
+            self::getResultsFromCheck4D($specialDraw,$drawDate,$magnumArray,$pmpArray,$totoArray,$singaporeArray,$sabahArray,$sandakanArray,$sarawakArray,$toto5dArray,$toto6dArray);
+
+            if ($specialDraw) { //Do not check singapore results as singapore does not have special draws
+                if (!self::checkCompanyResults($magnumArray) || !self::checkCompanyResults($pmpArray) || !self::checkCompanyResults($totoArray)
+                    || !self::checkCompanyResults($sarawakArray) || !self::checkCompanyResults($sandakanArray)
+                    || !self::checkCompanyResults($sabahArray) || !self::checkCompanyResults($toto5dArray) || !self::checkCompanyResults($toto6dArray)) {
+
+                    self::getResultsFromWin4D($specialDraw,$drawDate,$magnumArray,$pmpArray,$totoArray,$singaporeArray,$sabahArray,$sandakanArray,$sarawakArray,$toto5dArray,$toto6dArray);
+
+                    if (!self::checkCompanyResults($magnumArray) || !self::checkCompanyResults($pmpArray) || !self::checkCompanyResults($totoArray)
+                        || !self::checkCompanyResults($sarawakArray) || !self::checkCompanyResults($sandakanArray)
+                        || !self::checkCompanyResults($sabahArray) || !self::checkCompanyResults($toto5dArray) || !self::checkCompanyResults($toto6dArray)) {
+                        if ($i == 3) {
+                            Yii::error("checkCompanyResults false.");
+                            return ExitCode::SOFTWARE;
+                        }
+                    } else {
+                        break;
+                    }
+
+                    $i++;
+                } else {
+                    break;
+                }
+            } else {
+                if (!self::checkCompanyResults($magnumArray) || !self::checkCompanyResults($pmpArray) || !self::checkCompanyResults($totoArray)
+                    || !self::checkCompanyResults($singaporeArray) || !self::checkCompanyResults($sarawakArray) || !self::checkCompanyResults($sandakanArray)
+                    || !self::checkCompanyResults($sabahArray) || !self::checkCompanyResults($toto5dArray) || !self::checkCompanyResults($toto6dArray)) {
+
+                    self::getResultsFromWin4D($specialDraw,$drawDate,$magnumArray,$pmpArray,$totoArray,$singaporeArray,$sabahArray,$sandakanArray,$sarawakArray,$toto5dArray,$toto6dArray);
+
+                    if (!self::checkCompanyResults($magnumArray) || !self::checkCompanyResults($pmpArray) || !self::checkCompanyResults($totoArray)
+                        || !self::checkCompanyResults($singaporeArray) || !self::checkCompanyResults($sarawakArray) || !self::checkCompanyResults($sandakanArray)
+                        || !self::checkCompanyResults($sabahArray) || !self::checkCompanyResults($toto5dArray) || !self::checkCompanyResults($toto6dArray)) {
+                        if ($i == 3) {
+                            Yii::error("checkCompanyResults false.");
+                            return ExitCode::SOFTWARE;
+                        }
+                    } else {
+                        break;
+                    }
+
+                    $i++;
+                } else {
+                    break;
+                }
             }
-            switch ($i) {
-                case 0:
-                    $toto5dArray["1st"] = $value;
-                    break;
-                case 1:
-                    $toto5dArray["4th"] = $value;
-                    break;
-                case 2:
-                    $toto5dArray["2nd"] = $value;
-                    break;
-                case 3:
-                    $toto5dArray["5th"] = $value;
-                    break;
-                case 4:
-                    $toto5dArray["3rd"] = $value;
-                    break;
-                case 5:
-                    $toto5dArray["6th"] = $value;
-                    break;
-                case 6:
-                    $toto6dArray["1st"] = $value;
-                    break;
-                case 7:
-                    $toto6dArray["2nd1"] = $value;
-                    break;
-                case 8:
-                    $toto6dArray["2nd2"] = $value;
-                    break;
-                case 9:
-                    $toto6dArray["3rd1"] = $value;
-                    break;
-                case 10:
-                    $toto6dArray["3rd2"] = $value;
-                    break;
-                case 11:
-                    $toto6dArray["4th1"] = $value;
-                    break;
-                case 12:
-                    $toto6dArray["4th2"] = $value;
-                    break;
-                case 13:
-                    $toto6dArray["5th1"] = $value;
-                    break;
-                case 14:
-                    $toto6dArray["5th2"] = $value;
-                    break;
-            }
-            $i++;
         }
 
-        //print_r($magnumArray);
-        //print_r($pmpArray);
-        //print_r($totoArray);
-        //print_r($singaporeArray);
-        //print_r($sarawakArray);
-        //print_r($sandakanArray);
-        //print_r($sabahArray);
-        //print_r($toto5dArray);
-        //print_r($toto6dArray);
-
-        if (!self::checkCompanyResults($magnumArray) || !self::checkCompanyResults($pmpArray) || !self::checkCompanyResults($totoArray)
-            || !self::checkCompanyResults($singaporeArray) || !self::checkCompanyResults($sarawakArray) || !self::checkCompanyResults($sandakanArray)
-            || !self::checkCompanyResults($sabahArray) || !self::checkCompanyResults($toto5dArray) || !self::checkCompanyResults($toto6dArray)) {
-            Yii::error("checkCompanyResults false.");
-            return ExitCode::SOFTWARE;
-        }
+        /*
+        print_r($magnumArray);
+        print_r($pmpArray);
+        print_r($totoArray);
+        print_r($singaporeArray);
+        print_r($sarawakArray);
+        print_r($sandakanArray);
+        print_r($sabahArray);
+        print_r($toto5dArray);
+        print_r($toto6dArray);
+        */
 
         //Insert Results
         $dbTrans = CompanyDraw::getDb()->beginTransaction();
@@ -531,6 +274,7 @@ class BetController extends Controller
     private function insertResults($resultsArray,$drawDate) {
         $code = $resultsArray["code"];
 
+        $drawDate = $drawDate->format('Y-m-d');
         //Proceed to insert the results
         switch ($code) {
             case Yii::$app->params['COMPANY']['CODE']['MAGNUM']:
@@ -616,10 +360,733 @@ class BetController extends Controller
         }
     }
 
+    private function getResultsFromCheck4D($specialDraw,$drawDate,&$magnumArray,&$pmpArray,&$totoArray,&$singaporeArray,&$sabahArray,&$sandakanArray,&$sarawakArray,&$toto5dArray,&$toto6dArray) {
+        $client = new Client();
+
+        $pmResultsReady = $emResultsReady = $singResultsReady = false;
+
+        /* Magnum, PMP, Toto, Toto 5D & 6D */
+        $crawler = $client->request('GET', 'https://www.check4d.com/');
+        /*
+         * Order of the results table
+         * 1. Magnum 4D
+         * 2. PMP 4D
+         * 3. Toto 4D
+         * 4. Toto 5D & 6D
+         * 5. PMP 3+3D (not relevant)
+         * 6. Magnum Life (not relevant)
+         * 7. Magnum 4D Jackpot Gold (not relevant)
+        */
+        $dates = $crawler->filter('td.resultdrawdate'); //Draw dates for all the companies
+        $validDatesCount = 0;
+        $i = 0;
+        foreach ($dates as $dateObj) {
+            $i++;
+            $value = trim($dateObj->nodeValue);
+            $value = preg_replace('/\xc2\xa0/','',$value); //Replace non breaking space
+            $value = preg_replace('/[\s\+]/', '', $value); //Replace plus sign
+            $value = substr($value,5,10);
+            if (empty($value)) {
+                Yii::error("dateObj, value is empty. i = $i");
+                return ExitCode::SOFTWARE;
+            }
+            if (!CommonClass::validateDate($value)) {
+                Yii::error("dateObj, invalid date. i = $i, value = $value");
+                continue;
+            }
+
+            if ($i >= 9) { //Ignore the non-relevant results
+                continue;
+            }
+
+            $date = \DateTime::createFromFormat('d-m-Y', $value);
+            $date->setTime(0,0);
+            if ($date != $drawDate) {
+                Yii::error("dateObj, date is not the same as drawDate. i = $i, value = $value");
+                return ExitCode::SOFTWARE;
+            }
+
+            $validDatesCount++;
+        }
+
+        //Make sure there are 4 dates found
+        if ($validDatesCount != 4) {
+            Yii::error("dates, $validDatesCount dates found.");
+            return ExitCode::SOFTWARE;
+        }
+
+        $topResults = $crawler->filter('td.resulttop'); //1st, 2nd & 3rd Prizes
+        /*
+         * 4 sets will be retrieved
+         * 1. Magnum 4D
+         * 2. PMP 4D
+         * 3. Toto 4D
+         * 4. PMP 3+3D (not relevant)
+         */
+        $i = 0;
+        foreach ($topResults as $topNumber) {
+            $value = trim($topNumber->nodeValue);
+            $value = preg_replace('/\xc2\xa0/', '', $value); //Replace non breaking space
+            $value = preg_replace('/[\s\+]/', '', $value); //Replace plus sign
+            if (empty($value)) {
+                Yii::error("topNumber, value is empty. i = $i");
+                return ExitCode::SOFTWARE;
+            }
+
+            if ($i >= 9) {
+                break; //Ignore the non-relevant results
+            }
+            //echo "$i = ".$value."\n";
+
+            switch ($i) {
+                case 0:
+                    $magnumArray["1st"] = $value;
+                    break;
+                case 1:
+                    $magnumArray["2nd"] = $value;
+                    break;
+                case 2:
+                    $magnumArray["3rd"] = $value;
+                    break;
+                case 3:
+                    $pmpArray["1st"] = $value;
+                    break;
+                case 4:
+                    $pmpArray["2nd"] = $value;
+                    break;
+                case 5:
+                    $pmpArray["3rd"] = $value;
+                    break;
+                case 6:
+                    $totoArray["1st"] = $value;
+                    break;
+                case 7:
+                    $totoArray["2nd"] = $value;
+                    break;
+                case 8:
+                    $totoArray["3rd"] = $value;
+                    break;
+            }
+            $i++;
+        }
+
+        $bottomResults = $crawler->filter('td.resultbottom'); //Special, Consolation & Other Prizes
+        /*
+         * 5 sets will be retrieved
+         * 1. Magnum 4D
+         * 2. PMP 4D
+         * 3. Toto 4D
+         * 4. Toto 5D & 6D
+         * 5. PMP 3+3D (not relevant)
+         */
+        $i = 0;
+        foreach ($bottomResults as $number) {
+            $value = trim($number->nodeValue);
+            $value = preg_replace('/\xc2\xa0/', '', $value); //Replace non breaking space
+            $value = preg_replace('/[\s\+]/', '', $value); //Replace plus sign
+            if (empty($value) || $value == "****" || $value == "----" || $value == "-") {
+                $i++;
+                continue;
+            }
+
+            if ($i >= 82) {
+                break; //Ignore the non-relevant results
+            }
+            //echo "$i = ".$value."\n";
+
+            switch (true) {
+                case ($i <= 12):
+                    $magnumArray["specialArray"][] = $value;
+                    break;
+                case ($i <= 22):
+                    $magnumArray["consoArray"][] = $value;
+                    break;
+                case ($i <= 33):
+                    $pmpArray["specialArray"][] = $value;
+                    break;
+                case ($i <= 43):
+                    $pmpArray["consoArray"][] = $value;
+                    break;
+                case ($i <= 56):
+                    $totoArray["specialArray"][] = $value;
+                    break;
+                case ($i <= 66):
+                    $totoArray["consoArray"][] = $value;
+                    break;
+                case ($i == 67):
+                    $toto5dArray["1st"] = $value;
+                    break;
+                case ($i == 68):
+                    $toto5dArray["4th"] = $value;
+                    break;
+                case ($i == 69):
+                    $toto5dArray["2nd"] = $value;
+                    break;
+                case ($i == 70):
+                    $toto5dArray["5th"] = $value;
+                    break;
+                case ($i == 71):
+                    $toto5dArray["3rd"] = $value;
+                    break;
+                case ($i == 72):
+                    $toto5dArray["6th"] = $value;
+                    break;
+                case ($i == 73):
+                    $toto6dArray["1st"] = $value;
+                    break;
+                case ($i == 74):
+                    $toto6dArray["2nd1"] = $value;
+                    break;
+                case ($i == 75):
+                    $toto6dArray["2nd2"] = $value;
+                    break;
+                case ($i == 76):
+                    $toto6dArray["3rd1"] = $value;
+                    break;
+                case ($i == 77):
+                    $toto6dArray["3rd2"] = $value;
+                    break;
+                case ($i == 78):
+                    $toto6dArray["4th1"] = $value;
+                    break;
+                case ($i == 79):
+                    $toto6dArray["4th2"] = $value;
+                    break;
+                case ($i == 80):
+                    $toto6dArray["5th1"] = $value;
+                    break;
+                case ($i == 81):
+                    $toto6dArray["5th2"] = $value;
+                    break;
+            }
+            $i++;
+        }
+
+        /*print_r($magnumArray);
+        print_r($pmpArray);
+        print_r($totoArray);
+        print_r($toto5dArray);
+        print_r($toto6dArray);*/
+
+        /* Sandakan, Sarawak, Sabah */
+        $crawler = $client->request('GET', 'https://www.check4d.com/sabah-sarawak-4d-results/');
+        /*
+         * Order of the results table
+         * 1. Sandakan
+         * 2. Sarawak
+         * 3. Sabah
+        */
+        $dates = $crawler->filter('td.resultdrawdate'); //Draw dates for all the companies
+        $validDatesCount = 0;
+        $i = 0;
+        foreach ($dates as $dateObj) {
+            $i++;
+            $value = trim($dateObj->nodeValue);
+            $value = preg_replace('/\xc2\xa0/','',$value); //Replace non breaking space
+            $value = preg_replace('/[\s\+]/', '', $value); //Replace plus sign
+            $value = substr($value,5,10);
+            if (empty($value)) {
+                Yii::error("dateObj, value is empty. i = $i");
+                return ExitCode::SOFTWARE;
+            }
+            if (!CommonClass::validateDate($value)) {
+                Yii::error("dateObj, invalid date. i = $i, value = $value");
+                continue;
+            }
+
+            $date = \DateTime::createFromFormat('d-m-Y', $value);
+            $date->setTime(0,0);
+            if ($date != $drawDate) {
+                Yii::error("dateObj, date is not the same as drawDate. i = $i, value = $value");
+                return ExitCode::SOFTWARE;
+            }
+
+            $validDatesCount++;
+        }
+
+        //Make sure there are 3 dates found
+        if ($validDatesCount != 3) {
+            Yii::error("dates, $validDatesCount dates found.");
+            return ExitCode::SOFTWARE;
+        }
+
+        $topResults = $crawler->filter('td.resulttop'); //1st, 2nd & 3rd Prizes
+        /*
+         * 4 sets will be retrieved
+         * 1. Sandakan
+         * 2. Sarawak
+         * 3. Sabah
+         * 4. Sabah 3D (not relevant)
+         */
+        $i = 0;
+        foreach ($topResults as $topNumber) {
+            $value = trim($topNumber->nodeValue);
+            $value = preg_replace('/\xc2\xa0/', '', $value); //Replace non breaking space
+            $value = preg_replace('/[\s\+]/', '', $value); //Replace plus sign
+            if (empty($value)) {
+                Yii::error("topNumber, value is empty. i = $i");
+                return ExitCode::SOFTWARE;
+            }
+
+            if ($i >= 9) {
+                break; //Ignore the non-relevant results
+            }
+            //echo "$i = ".$value."\n";
+
+            switch ($i) {
+                case 0:
+                    $sandakanArray["1st"] = $value;
+                    break;
+                case 1:
+                    $sandakanArray["2nd"] = $value;
+                    break;
+                case 2:
+                    $sandakanArray["3rd"] = $value;
+                    break;
+                case 3:
+                    $sarawakArray["1st"] = $value;
+                    break;
+                case 4:
+                    $sarawakArray["2nd"] = $value;
+                    break;
+                case 5:
+                    $sarawakArray["3rd"] = $value;
+                    break;
+                case 6:
+                    $sabahArray["1st"] = $value;
+                    break;
+                case 7:
+                    $sabahArray["2nd"] = $value;
+                    break;
+                case 8:
+                    $sabahArray["3rd"] = $value;
+                    break;
+            }
+            $i++;
+        }
+
+        $bottomResults = $crawler->filter('td.resultbottom'); //Special, Consolation & Other Prizes
+        /*
+         * 3 sets will be retrieved
+         * 1. Sandakan
+         * 2. Sarawak
+         * 3. Sabah
+         */
+        $i = 0;
+        foreach ($bottomResults as $number) {
+            $value = trim($number->nodeValue);
+            $value = preg_replace('/\xc2\xa0/', '', $value); //Replace non breaking space
+            $value = preg_replace('/[\s\+]/', '', $value); //Replace plus sign
+            if (empty($value) || $value == "****" || $value == "----" || $value == "-") {
+                $i++;
+                continue;
+            }
+
+            switch (true) {
+                case ($i <= 12):
+                    $sandakanArray["specialArray"][] = $value;
+                    break;
+                case ($i <= 22):
+                    $sandakanArray["consoArray"][] = $value;
+                    break;
+                case ($i <= 33):
+                    $sarawakArray["specialArray"][] = $value;
+                    break;
+                case ($i <= 43):
+                    $sarawakArray["consoArray"][] = $value;
+                    break;
+                case ($i <= 56):
+                    $sabahArray["specialArray"][] = $value;
+                    break;
+                case ($i <= 66):
+                    $sabahArray["consoArray"][] = $value;
+                    break;
+            }
+            $i++;
+        }
+
+        /* Singapore Starts */
+        if (!$specialDraw) {
+            $crawler = $client->request('GET', 'https://www.check4d.com/singapore-4d-results/');
+            /*
+             * Order of the results table
+             * 1. Singapore 4D
+             * 2. Singapore Toto (not relevant)
+            */
+            $dates = $crawler->filter('td.resultdrawdate'); //Draw dates for all the companies
+            $validDatesCount = 0;
+            $i = 0;
+            foreach ($dates as $dateObj) {
+                $i++;
+                $value = trim($dateObj->nodeValue);
+                $value = preg_replace('/\xc2\xa0/', '', $value); //Replace non breaking space
+                $value = preg_replace('/[\s\+]/', '', $value); //Replace plus sign
+                $value = substr($value, 5, 10);
+                if (empty($value)) {
+                    Yii::error("dateObj, value is empty. i = $i");
+                    return ExitCode::SOFTWARE;
+                }
+                if (!CommonClass::validateDate($value)) {
+                    Yii::error("dateObj, invalid date. i = $i, value = $value");
+                    continue;
+                }
+
+                if ($i >= 3) { //Ignore the non-relevant results
+                    continue;
+                }
+
+                $date = \DateTime::createFromFormat('d-m-Y', $value);
+                $date->setTime(0, 0);
+                if ($date != $drawDate) {
+                    Yii::error("dateObj, date is not the same as drawDate. i = $i, value = $value");
+                    return ExitCode::SOFTWARE;
+                }
+
+                $validDatesCount++;
+            }
+
+            //Make sure there is 1 date found
+            if ($validDatesCount != 1) {
+                Yii::error("dates, $validDatesCount dates found.");
+                return ExitCode::SOFTWARE;
+            }
+
+            $topResults = $crawler->filter('td.resulttop'); //1st, 2nd & 3rd Prizes
+            /*
+             * 1 set will be retrieved
+             * 1. Singapore
+             */
+            $i = 0;
+            foreach ($topResults as $topNumber) {
+                $value = trim($topNumber->nodeValue);
+                $value = preg_replace('/\xc2\xa0/', '', $value); //Replace non breaking space
+                $value = preg_replace('/[\s\+]/', '', $value); //Replace plus sign
+                if (empty($value)) {
+                    Yii::error("topNumber, value is empty. i = $i");
+                    return ExitCode::SOFTWARE;
+                }
+
+                switch ($i) {
+                    case 0:
+                        $singaporeArray["1st"] = $value;
+                        break;
+                    case 1:
+                        $singaporeArray["2nd"] = $value;
+                        break;
+                    case 2:
+                        $singaporeArray["3rd"] = $value;
+                        break;
+                }
+                $i++;
+            }
+
+            $bottomResults = $crawler->filter('td.resultbottom'); //Special, Consolation & Other Prizes
+            /*
+             * 1 set will be retrieved
+             * 1. Singapore
+             */
+            $i = 0;
+            foreach ($bottomResults as $number) {
+                $value = trim($number->nodeValue);
+                $value = preg_replace('/\xc2\xa0/', '', $value); //Replace non breaking space
+                $value = preg_replace('/[\s\+]/', '', $value); //Replace plus sign
+                if (empty($value) || $value == "****" || $value == "----" || $value == "-") {
+                    $i++;
+                    continue;
+                }
+
+                switch (true) {
+                    case ($i <= 9):
+                        $singaporeArray["specialArray"][] = $value;
+                        break;
+                    case ($i <= 19):
+                        $singaporeArray["consoArray"][] = $value;
+                        break;
+                }
+                $i++;
+            }
+        }
+    }
+
+    private function getResultsFromWin4D($specialDraw,$drawDate,&$magnumArray,&$pmpArray,&$totoArray,&$singaporeArray,&$sabahArray,&$sandakanArray,&$sarawakArray,&$toto5dArray,&$toto6dArray) {
+        $client = new Client();
+        $crawler = $client->request('GET', 'http://www.win4d.com.my/');
+        $dates = $crawler->filter('b.f_16'); //Draw dates for all the companies except 5d/6d
+        $validDatesCount = 0;
+        $i = 0;
+        foreach ($dates as $dateObj) {
+            $i++;
+            $value = trim($dateObj->nodeValue);
+            $value = preg_replace('/\xc2\xa0/','',$value); //Replace non breaking space
+            $value = preg_replace('/[\s\+]/', '', $value); //Replace plus sign
+            $value = substr($value,-10);
+            if (empty($value)) {
+                Yii::error("dateObj, value is empty. i = $i");
+                return ExitCode::SOFTWARE;
+            }
+            if (!CommonClass::validateDate($value,'d/m/Y')) {
+                Yii::error("dateObj, invalid date. i = $i, value = $value");
+                continue;
+            }
+
+            if ($specialDraw && $i == 6) { //if it's singapore and it's special draw (tuesday), ignore singapore results
+                continue;
+            }
+
+            $date = \DateTime::createFromFormat('d/m/Y', $value);
+            $date->setTime(0,0);
+            if ($date != $drawDate) {
+                Yii::error("dateObj, date is not the same as drawDate. i = $i, value = $value");
+                return ExitCode::SOFTWARE;
+            }
+
+            $validDatesCount++;
+        }
+
+        if ($specialDraw) { //Make sure there are 8 dates found (singapore is excluded on special draws)
+            if ($validDatesCount != 8) {
+                Yii::error("dates, $validDatesCount dates found.");
+                return ExitCode::SOFTWARE;
+            }
+        } else { //Make sure there are 9 dates found
+            if ($validDatesCount != 9) {
+                Yii::error("dates, $validDatesCount dates found.");
+                return ExitCode::SOFTWARE;
+            }
+        }
+
+
+        $sixdDate = $crawler->filter('td.resultdrawdate'); //Draw date for toto 5d/6d
+        $validDatesCount = 0;
+        foreach ($sixdDate as $sixdDateObj) {
+            $i++;
+            $value = trim($sixdDateObj->nodeValue);
+            $value = preg_replace('/\xc2\xa0/','',$value); //Replace non breaking space
+            $value = preg_replace('/[\s\+]/', '', $value); //Replace plus sign
+            $value = substr($value,-10);
+            if (empty($value)) {
+                Yii::error("sixdDateObj, value is empty. i = $i");
+                return ExitCode::SOFTWARE;
+            }
+            if (!CommonClass::validateDate($value,'d/m/Y')) {
+                Yii::error("sixdDateObj, invalid date. i = $i, value = $value");
+                continue;
+            }
+            $date = \DateTime::createFromFormat('d/m/Y', $value);
+            $date->setTime(0,0);
+            if ($date != $drawDate) {
+                Yii::error("sixdDateObj, date is not the same as drawDate. i = $i, value = $value");
+                return ExitCode::SOFTWARE;
+            }
+            $validDatesCount++;
+        }
+        //Make sure there's 1 date found
+        if ($validDatesCount != 1) {
+            Yii::error("sixdDate, $validDatesCount dates found.");
+            return ExitCode::SOFTWARE;
+        }
+
+        $fstNumbers = $crawler->filter('th.f_40'); //First, Second, and Third Prize Numbers
+        $i = 0;
+        foreach ($fstNumbers as $fstNumber) {
+            $value = trim($fstNumber->nodeValue);
+            $value = preg_replace('/\xc2\xa0/','',$value); //Replace non breaking space
+            $value = preg_replace('/[\s\+]/', '', $value); //Replace plus sign
+            if (empty($value)) {
+                Yii::error("fstNumber, value is empty. i = $i");
+                return ExitCode::SOFTWARE;
+            }
+            switch ($i) {
+                case 0:
+                    $magnumArray["1st"] = $value;
+                    break;
+                case 1:
+                    $magnumArray["2nd"] = $value;
+                    break;
+                case 2:
+                    $magnumArray["3rd"] = $value;
+                    break;
+                case 3:
+                    $pmpArray["1st"] = $value;
+                    break;
+                case 4:
+                    $pmpArray["2nd"] = $value;
+                    break;
+                case 5:
+                    $pmpArray["3rd"] = $value;
+                    break;
+                case 6:
+                    $totoArray["1st"] = $value;
+                    break;
+                case 7:
+                    $totoArray["2nd"] = $value;
+                    break;
+                case 8:
+                    $totoArray["3rd"] = $value;
+                    break;
+                case 9:
+                    $singaporeArray["1st"] = $value;
+                    break;
+                case 10:
+                    $singaporeArray["2nd"] = $value;
+                    break;
+                case 11:
+                    $singaporeArray["3rd"] = $value;
+                    break;
+                case 12:
+                    $sarawakArray["1st"] = $value;
+                    break;
+                case 13:
+                    $sarawakArray["2nd"] = $value;
+                    break;
+                case 14:
+                    $sarawakArray["3rd"] = $value;
+                    break;
+                case 15:
+                    $sandakanArray["1st"] = $value;
+                    break;
+                case 16:
+                    $sandakanArray["2nd"] = $value;
+                    break;
+                case 17:
+                    $sandakanArray["3rd"] = $value;
+                    break;
+                case 18:
+                    $sabahArray["1st"] = $value;
+                    break;
+                case 19:
+                    $sabahArray["2nd"] = $value;
+                    break;
+                case 20:
+                    $sabahArray["3rd"] = $value;
+                    break;
+            }
+            $i++;
+        }
+
+        $specialConNumbers = $crawler->filter('tr.f_20 > td'); //Special & Consolation Prize Numbers
+        $i = 0;
+        foreach ($specialConNumbers as $specialConNumber) {
+            $value = trim($specialConNumber->nodeValue);
+            $value = preg_replace('/\xc2\xa0/','',$value); //Replace non breaking space
+            $value = preg_replace('/[\s\+]/', '', $value); //Replace plus sign
+            if (empty($value)) {
+                Yii::error("specialConNumber, value is empty. i = $i");
+                return ExitCode::SOFTWARE;
+            }
+            switch (true) {
+                case ($i <= 9):
+                    $magnumArray["specialArray"][] = $value;
+                    break;
+                case ($i <= 19):
+                    $magnumArray["consoArray"][] = $value;
+                    break;
+                case ($i <= 29):
+                    $pmpArray["specialArray"][] = $value;
+                    break;
+                case ($i <= 39):
+                    $pmpArray["consoArray"][] = $value;
+                    break;
+                case ($i <= 49):
+                    $totoArray["specialArray"][] = $value;
+                    break;
+                case ($i <= 59):
+                    $totoArray["consoArray"][] = $value;
+                    break;
+                case ($i <= 69):
+                    $singaporeArray["specialArray"][] = $value;
+                    break;
+                case ($i <= 79):
+                    $singaporeArray["consoArray"][] = $value;
+                    break;
+                case ($i <= 89):
+                    $sarawakArray["specialArray"][] = $value;
+                    break;
+                case ($i <= 99):
+                    $sarawakArray["consoArray"][] = $value;
+                    break;
+                case ($i <= 109):
+                    $sandakanArray["specialArray"][] = $value;
+                    break;
+                case ($i <= 119):
+                    $sandakanArray["consoArray"][] = $value;
+                    break;
+                case ($i <= 129):
+                    $sabahArray["specialArray"][] = $value;
+                    break;
+                case ($i <= 139):
+                    $sabahArray["consoArray"][] = $value;
+                    break;
+            }
+            $i++;
+        }
+
+        $toto5d6dNumbers = $crawler->filter('td.resultbottom'); //5D 6D numbers
+        $i = 0;
+        foreach ($toto5d6dNumbers as $toto5d6dNumber) {
+            $value = trim($toto5d6dNumber->nodeValue);
+            $value = preg_replace('/\xc2\xa0/','',$value); //Replace non breaking space
+            $value = preg_replace('/[\s\+]/', '', $value); //Replace plus sign
+            if (empty($value)) {
+                Yii::error("toto5d6dNumber, value is empty. i = $i");
+                return ExitCode::SOFTWARE;
+            }
+            switch ($i) {
+                case 0:
+                    $toto5dArray["1st"] = $value;
+                    break;
+                case 1:
+                    $toto5dArray["4th"] = $value;
+                    break;
+                case 2:
+                    $toto5dArray["2nd"] = $value;
+                    break;
+                case 3:
+                    $toto5dArray["5th"] = $value;
+                    break;
+                case 4:
+                    $toto5dArray["3rd"] = $value;
+                    break;
+                case 5:
+                    $toto5dArray["6th"] = $value;
+                    break;
+                case 6:
+                    $toto6dArray["1st"] = $value;
+                    break;
+                case 7:
+                    $toto6dArray["2nd1"] = $value;
+                    break;
+                case 8:
+                    $toto6dArray["2nd2"] = $value;
+                    break;
+                case 9:
+                    $toto6dArray["3rd1"] = $value;
+                    break;
+                case 10:
+                    $toto6dArray["3rd2"] = $value;
+                    break;
+                case 11:
+                    $toto6dArray["4th1"] = $value;
+                    break;
+                case 12:
+                    $toto6dArray["4th2"] = $value;
+                    break;
+                case 13:
+                    $toto6dArray["5th1"] = $value;
+                    break;
+                case 14:
+                    $toto6dArray["5th2"] = $value;
+                    break;
+            }
+            $i++;
+        }
+    }
+
     private function processResults($drawDate) {
         //Proceed to scan the bets to see if they are won or lost
         $btStatusArray = array(Yii::$app->params['BET']['DETAIL']['STATUS']['ACCEPTED'],Yii::$app->params['BET']['DETAIL']['STATUS']['LIMITED']);
 
+        $drawDate = $drawDate->format('Y-m-d');
         $bets = Bet::find()
             ->innerJoinWith([
                 'betDetails' => function ($query) use ($drawDate,$btStatusArray) {
