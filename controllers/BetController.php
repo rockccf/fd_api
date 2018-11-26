@@ -8,6 +8,7 @@ use app\models\BetDetailReject;
 use app\models\BetNumber;
 use app\models\Company;
 use app\models\Master;
+use app\models\User;
 use app\models\UserDetail;
 use Yii;
 use app\components\ccf\CommonClass;
@@ -28,7 +29,6 @@ class BetController extends ActiveController
 {
     public $viewAction = 'view';
     public $modelClass = 'app\models\Bet';
-    //Include pagination information directly in the response body
     public $serializer = [
         'class' => 'yii\rest\Serializer',
         'collectionEnvelope' => 'items',
@@ -246,9 +246,9 @@ class BetController extends ActiveController
         $extraGdCommRate = $betModel->extraGdCommRate;
         $totalGdCommRate = $betModel->{'gdCommRate'}+$betModel->extraGdCommRate;
 
-        $superior4dCommRate = $betModel->superior4dCommRate-$betModel->{'4dCommRate'};
-        $superior6dCommRate = $betModel->superior6dCommRate-$betModel->{'6dCommRate'};
-        $superiorGdCommRate = $betModel->superiorGdCommRate-$betModel->{'gdCommRate'};
+        $superior4dCommRate = $betModel->superior4dCommRate-$total4dCommRate;
+        $superior6dCommRate = $betModel->superior6dCommRate-$total6dCommRate;
+        $superiorGdCommRate = $betModel->superiorGdCommRate-$totalGdCommRate;
 
         $dbTrans = Bet::getDb()->beginTransaction();
         try {
@@ -322,7 +322,11 @@ class BetController extends ActiveController
                 $totalBet = $big+$small+$amount4a+$amount4b+$amount4c+$amount4d+$amount4e+$amount4f;
                 $totalBet += $amount3abc+$amount3a+$amount3b+$amount3c+$amount3d+$amount3e+$amount5d+$amount6d;
                 if ($bn->betOption == Yii::$app->params['BET']['NUMBER']['OPTION']['RETURN']) {
-                    $totalBet = $totalBet * 2;
+                    $numbers = [];
+                    self::permute($number,0,strlen($number)-1,$numbers);
+                    if (count($numbers) > 1) { //Make sure user did not enter a number with same 4 digits (1111, 2222 etc)
+                        $totalBet = $totalBet * 2;
+                    }
                 } else if ($bn->betOption == Yii::$app->params['BET']['NUMBER']['OPTION']['BOX']) {
                     $numbers = [];
                     self::permute($number,0,strlen($number)-1,$numbers);
@@ -408,19 +412,21 @@ class BetController extends ActiveController
                     $grandTotalSuperiorCommission += $resultsArray["totalSuperiorCommission"];
 
                     //Reverse the number (1234 becomes 4321)
-                    $number = strrev($betNumber);
-                    $resultsArray = self::insertBetDetail($number,$bet,$drawDate,$company->id,$companyCode,$masterId,$betModel->id,$bn->id,
-                        $total4dCommRate,$superior4dCommRate,$total6dCommRate,$superior6dCommRate,
-                        $totalGdCommRate,$superiorGdCommRate,$own4dCommRate,$extra4dCommRate,$own6dCommRate,$extra6dCommRate,
-                        $ownGdCommRate,$extraGdCommRate);
+                    if (strrev($betNumber) != $number) { //Make sure user did not enter a number with same 4 digits (1111, 2222 etc)
+                        $number = strrev($betNumber);
+                        $resultsArray = self::insertBetDetail($number,$bet,$drawDate,$company->id,$companyCode,$masterId,$betModel->id,$bn->id,
+                            $total4dCommRate,$superior4dCommRate,$total6dCommRate,$superior6dCommRate,
+                            $totalGdCommRate,$superiorGdCommRate,$own4dCommRate,$extra4dCommRate,$own6dCommRate,$extra6dCommRate,
+                            $ownGdCommRate,$extraGdCommRate);
 
-                    if ($resultsArray["status"] != Yii::$app->params['BET']['DETAIL']['STATUS']['ACCEPTED']) {
-                        $grandTotalSales -= $resultsArray["totalReject"];
+                        if ($resultsArray["status"] != Yii::$app->params['BET']['DETAIL']['STATUS']['ACCEPTED']) {
+                            $grandTotalSales -= $resultsArray["totalReject"];
+                        }
+                        $grandTotalOwnCommission += $resultsArray["totalOwnCommission"];
+                        $grandTotalExtraCommission += $resultsArray["totalExtraCommission"];
+                        $grandTotalCommission += $resultsArray["totalCommission"];
+                        $grandTotalSuperiorCommission += $resultsArray["totalSuperiorCommission"];
                     }
-                    $grandTotalOwnCommission += $resultsArray["totalOwnCommission"];
-                    $grandTotalExtraCommission += $resultsArray["totalExtraCommission"];
-                    $grandTotalCommission += $resultsArray["totalCommission"];
-                    $grandTotalSuperiorCommission += $resultsArray["totalSuperiorCommission"];
                 } else if ($betOption == Yii::$app->params['BET']['NUMBER']['OPTION']['BOX']) {
                     $numbers = [];
                     self::permute($betNumber,0,strlen($betNumber)-1,$numbers);
@@ -664,6 +670,7 @@ class BetController extends ActiveController
             ->all();
 
         $voidCount = 0;
+        $totalVoid = 0;
         foreach ($bds as $bd) {
             $bd->status = Yii::$app->params['BET']['DETAIL']['STATUS']['VOIDED'];
             $bd->voidDate = new Expression('NOW()');
@@ -671,8 +678,21 @@ class BetController extends ActiveController
                 Yii::error($bd->errors);
                 return $bd;
             }
+            $totalVoid += $bd->totalSales;
             $voidCount++;
         }
+
+        if ($totalVoid > 0) {
+            $totalVoid = round($totalVoid,2);
+            //Proceed to update the user balance
+            $userDetail = UserDetail::findOne(['userId'=>Yii::$app->user->identity->getId()]);
+            $userDetail->outstandingBet -= $totalVoid;
+            if (!$userDetail->save()) {
+                Yii::error($userDetail->errors);
+                return $userDetail;
+            }
+        }
+
 
         $betIdCount = count($voidArray);
         $result = ["betIdCount"=>$betIdCount,"voidCount"=>$voidCount,"betDetailIdArray"=>$voidArray];
@@ -730,7 +750,17 @@ class BetController extends ActiveController
         $betDateEnd = !empty($params["betDateEnd"]) ? Date('Y-m-d 23:59:59', strtotime($params["betDateEnd"])) : null;
 
         $createdByArray = $params["createdByArray"] ?? [];
-        if (Yii::$app->user->identity->userType == Yii::$app->params['USER']['TYPE']['AGENT']) {
+        if (Yii::$app->user->identity->userType == Yii::$app->params['USER']['TYPE']['MASTER']) {
+            //Get all the agents under the master
+            $agents = User::findAll(['masterId'=>Yii::$app->user->identity->masterId,'userType'=>Yii::$app->params['USER']['TYPE']['AGENT']]);
+            foreach ($agents as $agent) {
+                $createdByArray[] = $agent->id;
+                $players = $agent->players;
+                foreach ($players as $player) {
+                    $createdByArray[] = $player->id;
+                }
+            }
+        } else if (Yii::$app->user->identity->userType == Yii::$app->params['USER']['TYPE']['AGENT']) {
             $createdByArray[] = Yii::$app->user->identity->getId();
             $players = Yii::$app->user->identity->players;
             foreach ($players as $player) {
@@ -778,7 +808,17 @@ class BetController extends ActiveController
         $number = $params["number"] ?? null;
 
         $createdByArray = $params["createdByArray"] ?? [];
-        if (Yii::$app->user->identity->userType == Yii::$app->params['USER']['TYPE']['AGENT']) {
+        if (Yii::$app->user->identity->userType == Yii::$app->params['USER']['TYPE']['MASTER']) {
+            //Get all the agents under the master
+            $agents = User::findAll(['masterId'=>Yii::$app->user->identity->masterId,'userType'=>Yii::$app->params['USER']['TYPE']['AGENT']]);
+            foreach ($agents as $agent) {
+                $createdByArray[] = $agent->id;
+                $players = $agent->players;
+                foreach ($players as $player) {
+                    $createdByArray[] = $player->id;
+                }
+            }
+        } else if (Yii::$app->user->identity->userType == Yii::$app->params['USER']['TYPE']['AGENT']) {
             $createdByArray[] = Yii::$app->user->identity->getId();
             $players = Yii::$app->user->identity->players;
             foreach ($players as $player) {
@@ -871,7 +911,17 @@ class BetController extends ActiveController
         $number = $params["number"] ?? null;
 
         $createdByArray = $params["createdByArray"] ?? [];
-        if (Yii::$app->user->identity->userType == Yii::$app->params['USER']['TYPE']['AGENT']) {
+        if (Yii::$app->user->identity->userType == Yii::$app->params['USER']['TYPE']['MASTER']) {
+            //Get all the agents under the master
+            $agents = User::findAll(['masterId'=>Yii::$app->user->identity->masterId,'userType'=>Yii::$app->params['USER']['TYPE']['AGENT']]);
+            foreach ($agents as $agent) {
+                $createdByArray[] = $agent->id;
+                $players = $agent->players;
+                foreach ($players as $player) {
+                    $createdByArray[] = $player->id;
+                }
+            }
+        } else if (Yii::$app->user->identity->userType == Yii::$app->params['USER']['TYPE']['AGENT']) {
             $createdByArray[] = Yii::$app->user->identity->getId();
             $players = Yii::$app->user->identity->players;
             foreach ($players as $player) {

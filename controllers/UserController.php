@@ -252,8 +252,7 @@ class UserController extends ActiveController
                 $uplineAgent = $user->agent;
                 //Check if the agent has sufficient credit limit to grant
                 $creditAvailable = $uplineAgent->userDetail->creditLimit - $uplineAgent->userDetail->creditGranted;
-                $userDetail = $user->userDetail;
-                $grantedCredit = $params['creditLimit']-$userDetail->creditLimit; //This might be negative, if the agent decreases the credit limit
+                $grantedCredit = $params['creditLimit'];
                 if ($grantedCredit > $creditAvailable) {
                     Throw new UnprocessableEntityHttpException("You do not have sufficient credit to grant to the player.");
                 }
@@ -264,6 +263,9 @@ class UserController extends ActiveController
                 $userDetail->betMethod = $params['betMethod'];
                 $userDetail->betGdLotto = Yii::$app->user->identity->userDetail->betGdLotto; //Follow upline agent settings
                 $userDetail->bet6d = Yii::$app->user->identity->userDetail->bet6d; //Follow upline agent settings
+                $userDetail->extra4dCommRate = $params['extra4dCommRate'] ?? null;
+                $userDetail->extra6dCommRate = $params['extra6dCommRate'] ?? null;
+                $userDetail->extraGdCommRate = $params['extraGdCommRate'] ?? null;
                 $userDetail->userId = $user->id;
 
                 if (!$userDetail->save()) {
@@ -351,9 +353,9 @@ class UserController extends ActiveController
                 $userDetail->betMethod = $params['betMethod']; //Follow upline agent settings
                 $userDetail->betGdLotto = $uplineAgent->userDetail->betGdLotto; //Follow upline agent settings
                 $userDetail->bet6d = $uplineAgent->userDetail->bet6d; //Follow upline agent settings
-                $userDetail->extra4dCommRate = $params['extra4dCommRate'];
-                $userDetail->extra6dCommRate = $params['extra6dCommRate'];
-                $userDetail->extraGdCommRate = $params['extraGdCommRate'];
+                $userDetail->extra4dCommRate = $params['extra4dCommRate'] ?? null;
+                $userDetail->extra6dCommRate = $params['extra6dCommRate'] ?? null;
+                $userDetail->extraGdCommRate = $params['extraGdCommRate'] ?? null;
                 $userDetail->userId = $user->id;
 
                 if (!$userDetail->save()) {
