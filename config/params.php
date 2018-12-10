@@ -7,9 +7,9 @@ if (YII_ENV_PROD) {
     $portalUrl = "http://www.tbt88.net";
     $serverName = "www.tbt88.net";
 } else if (YII_ENV_TEST) {
-    $allowedDomains = ['http://test.tbt88.net'];
-    $portalUrl = "http://test.tbt88.net";
-    $serverName = "test.tbt88.net";
+    $allowedDomains = ['http://staging.tbt88.net'];
+    $portalUrl = "http://staging.tbt88.net";
+    $serverName = "staging.tbt88.net";
 } else {
     $allowedDomains = ['*'];
     $portalUrl = "http://localhost:9200";

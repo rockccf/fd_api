@@ -773,7 +773,7 @@ class BetController extends ActiveController
         $bets = Bet::find()
             ->alias('b')
             ->where(['b.createdBy'=>$createdByArray])
-            ->with(['creator']);
+            ->with(['creator','betDetails']);
         if (!empty($drawDateStart) && !empty($drawDateEnd)) {
             $subquery = (new Query())
                 ->select('id')
@@ -790,8 +790,15 @@ class BetController extends ActiveController
         $result = [];
         for ($i=0;$i<count($bets);$i++) {
             $result[$i] = ArrayHelper::toArray($bets[$i]);
+            $voidedBetsCount = 0;
+            foreach ($bets[$i]->betDetails as $betDetail) {
+                if ($betDetail->status == Yii::$app->params['BET']['DETAIL']['STATUS']['VOIDED']) {
+                    $voidedBetsCount++;
+                }
+            }
             $result[$i]["creator"] = $bets[$i]->creator;
             $result[$i]["slipText"] = $bets[$i]->slipText;
+            $result[$i]["voidedBetsCount"] = $voidedBetsCount;
         }
 
         return $result;

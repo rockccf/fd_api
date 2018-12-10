@@ -47,7 +47,7 @@ use yii\helpers\ArrayHelper;
  * @property string $extraCommission
  * @property string $totalCommission
  * @property string $totalWin
- * @property string $totalCollect
+ * @property string $totalSuperiorBonus
  * @property string $totalSuperiorCommission
  * @property int $packageId
  * @property int $masterId
@@ -84,7 +84,7 @@ class Bet extends \yii\db\ActiveRecord
         return [
             [['version', 'status', 'betMethod', 'masterId'], 'integer'],
             [['status', 'betMethod', 'betMaxLimitBig', 'betMaxLimitSmall', 'betMaxLimit4a', 'betMaxLimit4b', 'betMaxLimit4c', 'betMaxLimit4d', 'betMaxLimit4e', 'betMaxLimit4f', 'betMaxLimit3abc', 'betMaxLimit3a', 'betMaxLimit3b', 'betMaxLimit3c', 'betMaxLimit3d', 'betMaxLimit3e', 'betMaxLimit5d', 'betMaxLimit6d', '4dCommRate', '6dCommRate', 'gdCommRate', 'masterCommRate', 'masterId'], 'required'],
-            [['betMaxLimitBig', 'betMaxLimitSmall', 'betMaxLimit4a', 'betMaxLimit4b', 'betMaxLimit4c', 'betMaxLimit4d', 'betMaxLimit4e', 'betMaxLimit4f', 'betMaxLimit3abc', 'betMaxLimit3a', 'betMaxLimit3b', 'betMaxLimit3c', 'betMaxLimit3d', 'betMaxLimit3e', 'betMaxLimit5d', 'betMaxLimit6d', '4dCommRate', '6dCommRate', 'gdCommRate', 'extra4dCommRate', 'extra6dCommRate', 'extraGdCommRate', 'superior4dCommRate', 'superior6dCommRate', 'superiorGdCommRate', 'masterCommRate', 'totalSales', 'ownCommission', 'extraCommission', 'totalCommission', 'totalWin', 'totalCollect', 'totalSuperiorCommission'], 'number'],
+            [['betMaxLimitBig', 'betMaxLimitSmall', 'betMaxLimit4a', 'betMaxLimit4b', 'betMaxLimit4c', 'betMaxLimit4d', 'betMaxLimit4e', 'betMaxLimit4f', 'betMaxLimit3abc', 'betMaxLimit3a', 'betMaxLimit3b', 'betMaxLimit3c', 'betMaxLimit3d', 'betMaxLimit3e', 'betMaxLimit5d', 'betMaxLimit6d', '4dCommRate', '6dCommRate', 'gdCommRate', 'extra4dCommRate', 'extra6dCommRate', 'extraGdCommRate', 'superior4dCommRate', 'superior6dCommRate', 'superiorGdCommRate', 'masterCommRate', 'totalSales', 'ownCommission', 'extraCommission', 'totalCommission', 'totalWin', 'totalSuperiorBonus', 'totalSuperiorCommission'], 'number'],
             [['masterId'], 'exist', 'skipOnError' => true, 'targetClass' => Master::class, 'targetAttribute' => ['masterId' => 'id']],
             [['packageId'], 'exist', 'skipOnError' => true, 'targetClass' => Package::class, 'targetAttribute' => ['packageId' => 'id']]
         ];
@@ -131,7 +131,7 @@ class Bet extends \yii\db\ActiveRecord
             'extraCommission' => 'Extra Commission',
             'totalCommission' => 'Total Commission',
             'totalWin' => 'Total Win',
-            'totalCollect' => 'Total Collect',
+            'totalSuperiorBonus' => 'Total Superior Bonus',
             'totalSuperiorCommission' => 'Total Superior Commission',
             'packageId' => 'Package ID',
             'masterId' => 'Master ID',
@@ -293,8 +293,8 @@ class Bet extends \yii\db\ActiveRecord
             return floatval($model->totalWin); //Cast string to float/double type
         };
 
-        $fields['totalCollect'] = function ($model) {
-            return floatval($model->totalCollect); //Cast string to float/double type
+        $fields['totalSuperiorBonus'] = function ($model) {
+            return floatval($model->totalSuperiorBonus); //Cast string to float/double type
         };
 
         $fields['totalSuperiorCommission'] = function ($model) {
