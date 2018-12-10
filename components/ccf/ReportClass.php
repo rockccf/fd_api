@@ -29,10 +29,11 @@ class ReportClass extends BaseObject
             //Get all the agents under the master
             $agents = User::findAll(['masterId'=>Yii::$app->user->identity->masterId,'userType'=>Yii::$app->params['USER']['TYPE']['AGENT']]);
             $grandTotalUserSales = $grandTotalUserCommission = $grandTotalUserPayout = $grandTotalCollect = $grandTotalExtraCommission = 0;
-            $grandTotalCompanySales = $grandTotalCompanyCommission = $grandTotalCompanySuperiorCommission = $grandTotalCompanyPayout = $grandTotalCompanyBalance = 0;
+            $grandTotalCompanySales = $grandTotalCompanyCommission = $grandTotalCompanySuperiorCommission = 0;
+            $grandTotalCompanyPayout = $grandTotalCompanySuperiorBonus = $grandTotalCompanyBalance = 0;
             foreach ($agents as $agent) {
                 //Calculate own account first
-                $userTotalSales = $userTotalOwnCommission = $userTotalExtraCommission = $userTotalCommission = $userTotalWin = 0;
+                $userTotalSales = $userTotalOwnCommission = $userTotalExtraCommission = $userTotalCommission = $userTotalWin = $userTotalSuperiorBonus = 0;
 
                 $betDetails = BetDetail::find()
                     ->where(['createdBy'=>$agent->id])
@@ -59,7 +60,7 @@ class ReportClass extends BaseObject
                 $companyTotalCommission = $userTotalCommission;
                 $companyTotalPayout = $userTotalWin;
 
-                $companyTotalBalance = $userTotalSales-$userTotalCommission-$userTotalWin;
+                $companyTotalBalance = $userTotalSales-$userTotalCommission-$userTotalWin-$userTotalSuperiorBonus;
                 $companyTotalBalance = $companyTotalBalance*-1;
 
                 $rowArray[] = [
@@ -95,6 +96,7 @@ class ReportClass extends BaseObject
                     $userTotalCommission = 0;
                     $userTotalSuperiorCommission = 0;
                     $userTotalWin = 0;
+                    $userTotalSuperiorBonus = 0;
 
                     $betDetails = BetDetail::find()
                         ->where(['createdBy'=>$player->id])
@@ -108,6 +110,7 @@ class ReportClass extends BaseObject
                         $extraCommission = $betDetail->extraCommission;
                         $totalWin = $betDetail->totalWin;
                         $superiorCommission = $betDetail->totalSuperiorCommission;
+                        $totalSuperiorBonus = $betDetail->totalSuperiorBonus;
 
                         $userTotalSales += $totalSales;
                         $userTotalOwnCommission += $ownCommission;
@@ -115,6 +118,7 @@ class ReportClass extends BaseObject
                         $userTotalSuperiorCommission += $superiorCommission;
                         $userTotalCommission = $userTotalOwnCommission+$userTotalExtraCommission;
                         $userTotalWin += $totalWin;
+                        $userTotalSuperiorBonus += $totalSuperiorBonus;
                     }
 
                     $userTotalCollect = $userTotalWin+$userTotalOwnCommission+$userTotalExtraCommission-$userTotalSales;
@@ -122,8 +126,9 @@ class ReportClass extends BaseObject
                     $companyTotalCommission = $userTotalCommission;
                     $companyTotalSuperiorCommission = $userTotalSuperiorCommission;
                     $companyTotalPayout = $userTotalWin;
+                    $companyTotalSuperiorBonus = $userTotalSuperiorBonus;
 
-                    $companyTotalBalance = $userTotalSales-$userTotalCommission-$companyTotalSuperiorCommission-$userTotalWin;
+                    $companyTotalBalance = $userTotalSales-$userTotalCommission-$companyTotalSuperiorCommission-$userTotalWin-$userTotalSuperiorBonus;
                     $companyTotalBalance = $companyTotalBalance*-1;
 
                     $rowArray[] = [
@@ -138,6 +143,7 @@ class ReportClass extends BaseObject
                         "companyCommission" => $companyTotalCommission,
                         "superiorCommission" => $companyTotalSuperiorCommission,
                         "companyPayout" => $companyTotalPayout,
+                        "companyTotalSuperiorBonus" => $companyTotalSuperiorBonus,
                         "balance" => $companyTotalBalance,
                     ];
 
@@ -150,6 +156,7 @@ class ReportClass extends BaseObject
                     $grandTotalCompanyCommission += $companyTotalCommission;
                     $grandTotalCompanySuperiorCommission += $companyTotalSuperiorCommission;
                     $grandTotalCompanyPayout += $companyTotalPayout;
+                    $grandTotalCompanySuperiorBonus += $companyTotalSuperiorBonus;
                     $grandTotalCompanyBalance += $companyTotalBalance;
                 }
             }
@@ -163,10 +170,12 @@ class ReportClass extends BaseObject
             $result["grandTotalCompanyCommission"] = $grandTotalCompanyCommission;
             $result["grandTotalCompanySuperiorCommission"] = $grandTotalCompanySuperiorCommission;
             $result["grandTotalCompanyPayout"] = $grandTotalCompanyPayout;
+            $result["grandTotalCompanySuperiorBonus"] = $grandTotalCompanySuperiorBonus;
             $result["grandTotalCompanyBalance"] = $grandTotalCompanyBalance;
         } else if (Yii::$app->user->identity->userType == Yii::$app->params['USER']['TYPE']['AGENT']) {
             $grandTotalUserSales = $grandTotalUserCommission = $grandTotalUserPayout = $grandTotalCollect = $grandTotalExtraCommission = 0;
-            $grandTotalCompanySales = $grandTotalCompanyCommission = $grandTotalCompanySuperiorCommission = $grandTotalCompanyPayout = $grandTotalCompanyBalance = 0;
+            $grandTotalCompanySales = $grandTotalCompanyCommission = $grandTotalCompanySuperiorCommission = 0;
+            $grandTotalCompanySuperiorBonus = $grandTotalCompanyPayout = $grandTotalCompanyBalance = 0;
 
             //Calculate own account first
             $userTotalSales = $userTotalOwnCommission = $userTotalExtraCommission = $userTotalCommission = $userTotalWin = 0;
@@ -232,6 +241,7 @@ class ReportClass extends BaseObject
                 $userTotalCommission = 0;
                 $userTotalSuperiorCommission = 0;
                 $userTotalWin = 0;
+                $userTotalSuperiorBonus = 0;
 
                 $betDetails = BetDetail::find()
                     ->where(['createdBy'=>$player->id])
@@ -245,6 +255,7 @@ class ReportClass extends BaseObject
                     $extraCommission = $betDetail->extraCommission;
                     $totalWin = $betDetail->totalWin;
                     $superiorCommission = $betDetail->totalSuperiorCommission;
+                    $totalSuperiorBonus = $betDetail->totalSuperiorBonus;
 
                     $userTotalSales += $totalSales;
                     $userTotalOwnCommission += $ownCommission;
@@ -252,6 +263,7 @@ class ReportClass extends BaseObject
                     $userTotalSuperiorCommission += $superiorCommission;
                     $userTotalCommission = $userTotalOwnCommission+$userTotalExtraCommission;
                     $userTotalWin += $totalWin;
+                    $userTotalSuperiorBonus += $totalSuperiorBonus;
                 }
 
                 $userTotalCollect = $userTotalWin+$userTotalOwnCommission+$userTotalExtraCommission-$userTotalSales;
@@ -259,8 +271,9 @@ class ReportClass extends BaseObject
                 $companyTotalCommission = $userTotalCommission;
                 $companyTotalSuperiorCommission = $userTotalSuperiorCommission;
                 $companyTotalPayout = $userTotalWin;
+                $companyTotalSuperiorBonus = $userTotalSuperiorBonus;
 
-                $companyTotalBalance = $userTotalSales-$userTotalCommission-$companyTotalSuperiorCommission-$userTotalWin;
+                $companyTotalBalance = $userTotalSales-$userTotalCommission-$companyTotalSuperiorCommission-$userTotalWin-$userTotalSuperiorBonus;
                 $companyTotalBalance = $companyTotalBalance*-1;
 
                 $rowArray[] = [
@@ -275,6 +288,7 @@ class ReportClass extends BaseObject
                     "companyCommission" => $companyTotalCommission,
                     "superiorCommission" => $companyTotalSuperiorCommission,
                     "companyPayout" => $companyTotalPayout,
+                    "companyTotalSuperiorBonus" => $companyTotalSuperiorBonus,
                     "balance" => $companyTotalBalance,
                 ];
 
@@ -287,6 +301,7 @@ class ReportClass extends BaseObject
                 $grandTotalCompanyCommission += $companyTotalCommission;
                 $grandTotalCompanySuperiorCommission += $companyTotalSuperiorCommission;
                 $grandTotalCompanyPayout += $companyTotalPayout;
+                $grandTotalCompanySuperiorBonus += $companyTotalSuperiorBonus;
                 $grandTotalCompanyBalance += $companyTotalBalance;
             }
             $result["rowArray"] = $rowArray;
@@ -299,6 +314,7 @@ class ReportClass extends BaseObject
             $result["grandTotalCompanyCommission"] = $grandTotalCompanyCommission;
             $result["grandTotalCompanySuperiorCommission"] = $grandTotalCompanySuperiorCommission;
             $result["grandTotalCompanyPayout"] = $grandTotalCompanyPayout;
+            $result["grandTotalCompanySuperiorBonus"] = $grandTotalCompanySuperiorBonus;
             $result["grandTotalCompanyBalance"] = $grandTotalCompanyBalance;
         } else if (Yii::$app->user->identity->userType == Yii::$app->params['USER']['TYPE']['PLAYER']) {
             $betDetails = BetDetail::find()
@@ -347,7 +363,7 @@ class ReportClass extends BaseObject
      */
     public static function getDrawWinningNumber($params) {
         $result = $rowArray = [];
-        $grandTotalWin = 0;
+        $grandTotalWin = $grandTotalSuperiorBonus = 0;
         $drawDateStart = !empty($params["drawDateStart"]) ? Date('Y-m-d 00:00:00', strtotime($params["drawDateStart"])) : null;
         $drawDateEnd = !empty($params["drawDateEnd"]) ? Date('Y-m-d 00:00:00', strtotime($params["drawDateEnd"])) : null;
 
@@ -400,6 +416,7 @@ class ReportClass extends BaseObject
                         ];
 
                         $grandTotalWin += $bdw->totalWin;
+                        $grandTotalSuperiorBonus += $bdw->superiorBonus;
                     }
                 }
 
@@ -442,11 +459,13 @@ class ReportClass extends BaseObject
                                 "threeDigitPrize" => $threeDigitPrize,
                                 "prizeAmount" => $bdw->winPrizeAmount,
                                 "totalWin" => $bdw->totalWin,
+                                "superiorBonus" => $bdw->superiorBonus,
                                 "betDate" => $bd->createdAt,
                                 "remarks" => $bd->remarks
                             ];
 
                             $grandTotalWin += $bdw->totalWin;
+                            $grandTotalSuperiorBonus += $bdw->superiorBonus;
                         }
                     }
                 }
@@ -497,6 +516,7 @@ class ReportClass extends BaseObject
                     ];
 
                     $grandTotalWin += $bdw->totalWin;
+                    $grandTotalSuperiorBonus += $bdw->superiorBonus;
                 }
             }
 
@@ -539,11 +559,13 @@ class ReportClass extends BaseObject
                             "threeDigitPrize" => $threeDigitPrize,
                             "prizeAmount" => $bdw->winPrizeAmount,
                             "totalWin" => $bdw->totalWin,
+                            "superiorBonus" => $bdw->superiorBonus,
                             "betDate" => $bd->createdAt,
                             "remarks" => $bd->remarks
                         ];
 
                         $grandTotalWin += $bdw->totalWin;
+                        $grandTotalSuperiorBonus += $bdw->superiorBonus;
                     }
                 }
             }
@@ -594,6 +616,7 @@ class ReportClass extends BaseObject
         }
         $result["rowArray"] = $rowArray;
         $result["grandTotalWin"] = $grandTotalWin;
+        $result["grandTotalSuperiorBonus"] = $grandTotalSuperiorBonus;
 
         return $result;
     }
