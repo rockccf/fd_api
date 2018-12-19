@@ -629,6 +629,112 @@ class CommonClass extends BaseObject
         return $result;
     }
 
+    public static function getWinPrizeTypeObjectName($winPrizeType) {
+        $result = null;
+        switch ($winPrizeType) {
+            case Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['4D_BIG_PRIZE_1']:
+                $result = '4dBigPrize1';
+                break;
+            case Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['4D_BIG_PRIZE_2']:
+                $result = '4dBigPrize2';
+                break;
+            case Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['4D_BIG_PRIZE_3']:
+                $result = '4dBigPrize3';
+                break;
+            case Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['4D_BIG_STARTERS']:
+                $result = '4dBigStarters';
+                break;
+            case Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['4D_BIG_CONSOLATION']:
+                $result = '4dBigConsolation';
+                break;
+            case Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['4D_SMALL_PRIZE_1']:
+                $result = '4dSmallPrize1';
+                break;
+            case Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['4D_SMALL_PRIZE_2']:
+                $result = '4dSmallPrize2';
+                break;
+            case Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['4D_SMALL_PRIZE_3']:
+                $result = '4dSmallPrize3';
+                break;
+            case Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['4D_4A_PRIZE']:
+                $result = '4d4aPrize';
+                break;
+            case Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['4D_4B_PRIZE']:
+                $result = '4d4bPrize';
+                break;
+            case Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['4D_4C_PRIZE']:
+                $result = '4d4cPrize';
+                break;
+            case Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['4D_4D_PRIZE']:
+                $result = '4d4dPrize';
+                break;
+            case Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['4D_4E_PRIZE']:
+                $result = '4d4ePrize';
+                break;
+            case Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['4D_4F_PRIZE']:
+                $result = '4d4fPrize';
+                break;
+            case Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['3D_ABC_PRIZE_1']:
+                $result = '3dAbcPrize1';
+                break;
+            case Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['3D_ABC_PRIZE_2']:
+                $result = '3dAbcPrize2';
+                break;
+            case Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['3D_ABC_PRIZE_3']:
+                $result = '3dAbcPrize3';
+                break;
+            case Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['3D_3A_PRIZE']:
+                $result = '3d3aPrize';
+                break;
+            case Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['3D_3B_PRIZE']:
+                $result = '3d3bPrize';
+                break;
+            case Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['3D_3C_PRIZE']:
+                $result = '3d3cPrize';
+                break;
+            case Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['3D_3D_PRIZE']:
+                $result = '3d3dPrize';
+                break;
+            case Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['3D_3E_PRIZE']:
+                $result = '3d3ePrize';
+                break;
+            case Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['5D_PRIZE_1']:
+                $result = '5dPrize1';
+                break;
+            case Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['5D_PRIZE_2']:
+                $result = '5dPrize2';
+                break;
+            case Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['5D_PRIZE_3']:
+                $result = '5dPrize3';
+                break;
+            case Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['5D_PRIZE_4']:
+                $result = '5dPrize4';
+                break;
+            case Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['5D_PRIZE_5']:
+                $result = '5dPrize5';
+                break;
+            case Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['5D_PRIZE_6']:
+                $result = '5dPrize6';
+                break;
+            case Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['6D_PRIZE_1']:
+                $result = '6dPrize1';
+                break;
+            case Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['6D_PRIZE_2']:
+                $result = '6dPrize2';
+                break;
+            case Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['6D_PRIZE_3']:
+                $result = '6dPrize3';
+                break;
+            case Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['6D_PRIZE_4']:
+                $result = '6dPrize4';
+                break;
+            case Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['6D_PRIZE_5']:
+                $result = '6dPrize5';
+                break;
+        }
+        return $result;
+    }
+
     /*
      * If it falls under acceptable error, set it to be bet amount so it will be consistent with the bet amount
      */

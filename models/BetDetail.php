@@ -36,7 +36,7 @@ use yii\db\Expression;
  * @property string $extraCommission
  * @property string $totalCommission
  * @property string $totalWin
- * @property string $totalCollect
+ * @property string $totalSuperiorBonus
  * @property string $totalSuperiorCommission
  * @property int $status
  * @property int $won
@@ -76,7 +76,7 @@ class BetDetail extends \yii\db\ActiveRecord
         return [
             [['version', 'status', 'won', 'companyDrawId', 'betNumberId', 'betId'], 'integer'],
             [['number', 'totalSales', 'ownCommission', 'totalCommission', 'status', 'drawDate', 'companyDrawId', 'betNumberId', 'betId'], 'required'],
-            [['number', 'big', 'small', '4a', '4b', '4c', '4d', '4e', '4f', '3abc', '3a', '3b', '3c', '3d', '3e', '5d', '6d', 'totalSales', 'totalReject', 'ownCommission', 'extraCommission', 'totalCommission', 'totalWin', 'totalCollect', 'totalSuperiorCommission'], 'number'],
+            [['number', 'big', 'small', '4a', '4b', '4c', '4d', '4e', '4f', '3abc', '3a', '3b', '3c', '3d', '3e', '5d', '6d', 'totalSales', 'totalReject', 'ownCommission', 'extraCommission', 'totalCommission', 'totalWin', 'totalSuperiorBonus', 'totalSuperiorCommission'], 'number'],
             [['voidDate', 'drawDate'], 'safe'],
             [['number'], 'string', 'max' => 6],
             [['remarks'], 'string', 'max' => 255],
@@ -117,7 +117,7 @@ class BetDetail extends \yii\db\ActiveRecord
             'extraCommission' => 'Extra Commission',
             'totalCommission' => 'Total Commission',
             'totalWin' => 'Total Win',
-            'totalCollect' => 'Total Collect',
+            'totalSuperiorBonus' => 'Total Superior Bonus',
             'totalSuperiorCommission' => 'Total Superior Commission',
             'status' => 'Status',
             'won' => 'Won',
@@ -177,8 +177,8 @@ class BetDetail extends \yii\db\ActiveRecord
             return floatval($model->totalWin); //Cast string to float/double type
         };
 
-        $fields['totalCollect'] = function ($model) {
-            return floatval($model->totalCollect); //Cast string to float/double type
+        $fields['totalSuperiorBonus'] = function ($model) {
+            return floatval($model->totalSuperiorBonus); //Cast string to float/double type
         };
 
         $fields['totalSuperiorCommission'] = function ($model) {

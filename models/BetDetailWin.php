@@ -17,6 +17,8 @@ use yii\db\Expression;
  * @property int $winPrizeType
  * @property string $winPrizeAmount
  * @property string $totalWin
+ * @property string $superiorWinPrizeAmount
+ * @property string $superiorBonus
  * @property int $betDetailId
  * @property int $createdBy
  * @property string $createdAt
@@ -43,7 +45,7 @@ class BetDetailWin extends \yii\db\ActiveRecord
         return [
             [['version', 'winPrizeType', 'betDetailId'], 'integer'],
             [['betAmount', 'winPrizeType', 'winPrizeAmount', 'totalWin', 'betDetailId'], 'required'],
-            [['betAmount', 'winPrizeAmount', 'totalWin'], 'number'],
+            [['betAmount', 'winPrizeAmount', 'totalWin', 'superiorWinPrizeAmount', 'superiorBonus'], 'number'],
             [['betDetailId'], 'exist', 'skipOnError' => true, 'targetClass' => BetDetail::class, 'targetAttribute' => ['betDetailId' => 'id']]
         ];
     }
@@ -60,6 +62,8 @@ class BetDetailWin extends \yii\db\ActiveRecord
             'winPrizeType' => 'Win Prize Type',
             'winPrizeAmount' => 'Win Prize Amount',
             'totalWin' => 'Total Win',
+            'superiorWinPrizeAmount' => 'Superior Win Prize Amount',
+            'superiorBonus' => 'Superior Bonus',
             'betDetailId' => 'Bet Detail ID',
             'createdBy' => 'Created By',
             'createdAt' => 'Created At',

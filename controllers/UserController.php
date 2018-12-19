@@ -343,6 +343,7 @@ class UserController extends ActiveController
                 //Check if the agent has sufficient credit limit to grant
                 $creditAvailable = $uplineAgent->userDetail->creditLimit - $uplineAgent->userDetail->creditGranted;
                 $userDetail = $user->userDetail;
+                $userDetail->load($params,''); //Massive Assignment
                 $grantedCredit = $params['creditLimit']-$userDetail->creditLimit; //This might be negative, if the agent decreases the credit limit
                 if ($grantedCredit > $creditAvailable) {
                     Throw new UnprocessableEntityHttpException("You do not have sufficient credit to grant to the player.");
@@ -350,7 +351,7 @@ class UserController extends ActiveController
 
                 $userDetail->packageId = $uplineAgent->userDetail->packageId; //Follow upline agent settings
                 $userDetail->creditLimit = $params['creditLimit'];
-                $userDetail->betMethod = $params['betMethod']; //Follow upline agent settings
+                $userDetail->betMethod = $params['betMethod'];
                 $userDetail->betGdLotto = $uplineAgent->userDetail->betGdLotto; //Follow upline agent settings
                 $userDetail->bet6d = $uplineAgent->userDetail->bet6d; //Follow upline agent settings
                 $userDetail->extra4dCommRate = $params['extra4dCommRate'] ?? null;
