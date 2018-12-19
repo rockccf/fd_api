@@ -37,103 +37,102 @@ class BetController extends Controller
         Yii::info("commands\BetController starts, today = ".$today->format('Y-m-d').", drawDate = ".$drawDate->format('Y-m-d'));
 
         $companyDraws = CompanyDraw::findAll(['status'=>Yii::$app->params['COMPANY']['DRAW']['STATUS']['NEW'],'drawDate'=>$drawDate->format('Y-m-d')]);
-        if (empty($companyDraws) || count($companyDraws) <= 0) {
-            Yii::error("No available company draws.");
-            return ExitCode::SOFTWARE;
-        }
+        $pendingCompanyDrawsCount = count($companyDraws);
+        if ($pendingCompanyDrawsCount > 0) {
+            //Proceed to get the results
+            $magnumArray["code"] = Yii::$app->params['COMPANY']['CODE']['MAGNUM'];
+            $pmpArray["code"] = Yii::$app->params['COMPANY']['CODE']['PMP'];
+            $totoArray["code"] = Yii::$app->params['COMPANY']['CODE']['TOTO'];
+            $singaporeArray["code"] = Yii::$app->params['COMPANY']['CODE']['SINGAPORE'];
+            $sabahArray["code"] = Yii::$app->params['COMPANY']['CODE']['SABAH'];
+            $sandakanArray["code"] = Yii::$app->params['COMPANY']['CODE']['SANDAKAN'];
+            $sarawakArray["code"] = Yii::$app->params['COMPANY']['CODE']['SARAWAK'];
+            $toto5dArray["code"] = "T5";
+            $toto6dArray["code"] = "T6";
 
-        $magnumArray["code"] = Yii::$app->params['COMPANY']['CODE']['MAGNUM'];
-        $pmpArray["code"] = Yii::$app->params['COMPANY']['CODE']['PMP'];
-        $totoArray["code"] = Yii::$app->params['COMPANY']['CODE']['TOTO'];
-        $singaporeArray["code"] = Yii::$app->params['COMPANY']['CODE']['SINGAPORE'];
-        $sabahArray["code"] = Yii::$app->params['COMPANY']['CODE']['SABAH'];
-        $sandakanArray["code"] = Yii::$app->params['COMPANY']['CODE']['SANDAKAN'];
-        $sarawakArray["code"] = Yii::$app->params['COMPANY']['CODE']['SARAWAK'];
-        $toto5dArray["code"] = "T5";
-        $toto6dArray["code"] = "T6";
+            $i = 1;
+            while ($i <= 3) {
+                self::getResultsFromCheck4D($specialDraw,$drawDate,$magnumArray,$pmpArray,$totoArray,$singaporeArray,$sabahArray,$sandakanArray,$sarawakArray,$toto5dArray,$toto6dArray);
 
-        $i = 1;
-        while ($i <= 3) {
-            self::getResultsFromCheck4D($specialDraw,$drawDate,$magnumArray,$pmpArray,$totoArray,$singaporeArray,$sabahArray,$sandakanArray,$sarawakArray,$toto5dArray,$toto6dArray);
-
-            if ($specialDraw) { //Do not check singapore results as singapore does not have special draws
-                if (!self::checkCompanyResults($magnumArray) || !self::checkCompanyResults($pmpArray) || !self::checkCompanyResults($totoArray)
-                    || !self::checkCompanyResults($sarawakArray) || !self::checkCompanyResults($sandakanArray)
-                    || !self::checkCompanyResults($sabahArray) || !self::checkCompanyResults($toto5dArray) || !self::checkCompanyResults($toto6dArray)) {
-
-                    self::getResultsFromWin4D($specialDraw,$drawDate,$magnumArray,$pmpArray,$totoArray,$singaporeArray,$sabahArray,$sandakanArray,$sarawakArray,$toto5dArray,$toto6dArray);
-
+                if ($specialDraw) { //Do not check singapore results as singapore does not have special draws
                     if (!self::checkCompanyResults($magnumArray) || !self::checkCompanyResults($pmpArray) || !self::checkCompanyResults($totoArray)
                         || !self::checkCompanyResults($sarawakArray) || !self::checkCompanyResults($sandakanArray)
                         || !self::checkCompanyResults($sabahArray) || !self::checkCompanyResults($toto5dArray) || !self::checkCompanyResults($toto6dArray)) {
-                        if ($i == 3) {
-                            Yii::error("checkCompanyResults false.");
-                            return ExitCode::SOFTWARE;
+
+                        self::getResultsFromWin4D($specialDraw,$drawDate,$magnumArray,$pmpArray,$totoArray,$singaporeArray,$sabahArray,$sandakanArray,$sarawakArray,$toto5dArray,$toto6dArray);
+
+                        if (!self::checkCompanyResults($magnumArray) || !self::checkCompanyResults($pmpArray) || !self::checkCompanyResults($totoArray)
+                            || !self::checkCompanyResults($sarawakArray) || !self::checkCompanyResults($sandakanArray)
+                            || !self::checkCompanyResults($sabahArray) || !self::checkCompanyResults($toto5dArray) || !self::checkCompanyResults($toto6dArray)) {
+                            if ($i == 3) {
+                                Yii::error("checkCompanyResults false.");
+                                return ExitCode::SOFTWARE;
+                            }
+                        } else {
+                            break;
                         }
+
+                        $i++;
                     } else {
                         break;
                     }
-
-                    $i++;
                 } else {
-                    break;
-                }
-            } else {
-                if (!self::checkCompanyResults($magnumArray) || !self::checkCompanyResults($pmpArray) || !self::checkCompanyResults($totoArray)
-                    || !self::checkCompanyResults($singaporeArray) || !self::checkCompanyResults($sarawakArray) || !self::checkCompanyResults($sandakanArray)
-                    || !self::checkCompanyResults($sabahArray) || !self::checkCompanyResults($toto5dArray) || !self::checkCompanyResults($toto6dArray)) {
-
-                    self::getResultsFromWin4D($specialDraw,$drawDate,$magnumArray,$pmpArray,$totoArray,$singaporeArray,$sabahArray,$sandakanArray,$sarawakArray,$toto5dArray,$toto6dArray);
-
                     if (!self::checkCompanyResults($magnumArray) || !self::checkCompanyResults($pmpArray) || !self::checkCompanyResults($totoArray)
                         || !self::checkCompanyResults($singaporeArray) || !self::checkCompanyResults($sarawakArray) || !self::checkCompanyResults($sandakanArray)
                         || !self::checkCompanyResults($sabahArray) || !self::checkCompanyResults($toto5dArray) || !self::checkCompanyResults($toto6dArray)) {
-                        if ($i == 3) {
-                            Yii::error("checkCompanyResults false.");
-                            return ExitCode::SOFTWARE;
+
+                        self::getResultsFromWin4D($specialDraw,$drawDate,$magnumArray,$pmpArray,$totoArray,$singaporeArray,$sabahArray,$sandakanArray,$sarawakArray,$toto5dArray,$toto6dArray);
+
+                        if (!self::checkCompanyResults($magnumArray) || !self::checkCompanyResults($pmpArray) || !self::checkCompanyResults($totoArray)
+                            || !self::checkCompanyResults($singaporeArray) || !self::checkCompanyResults($sarawakArray) || !self::checkCompanyResults($sandakanArray)
+                            || !self::checkCompanyResults($sabahArray) || !self::checkCompanyResults($toto5dArray) || !self::checkCompanyResults($toto6dArray)) {
+                            if ($i == 3) {
+                                Yii::error("checkCompanyResults false.");
+                                return ExitCode::SOFTWARE;
+                            }
+                        } else {
+                            break;
                         }
+
+                        $i++;
                     } else {
                         break;
                     }
-
-                    $i++;
-                } else {
-                    break;
                 }
             }
-        }
 
-        /*
-        print_r($magnumArray);
-        print_r($pmpArray);
-        print_r($totoArray);
-        print_r($singaporeArray);
-        print_r($sarawakArray);
-        print_r($sandakanArray);
-        print_r($sabahArray);
-        print_r($toto5dArray);
-        print_r($toto6dArray);
-        */
+            /*
+            print_r($magnumArray);
+            print_r($pmpArray);
+            print_r($totoArray);
+            print_r($singaporeArray);
+            print_r($sarawakArray);
+            print_r($sandakanArray);
+            print_r($sabahArray);
+            print_r($toto5dArray);
+            print_r($toto6dArray);
+            */
 
-        //Insert Results
-        $dbTrans = CompanyDraw::getDb()->beginTransaction();
-        try {
-            self::insertResults($magnumArray,$drawDate);
-            self::insertResults($pmpArray,$drawDate);
-            self::insertResults($totoArray,$drawDate);
-            if (!$specialDraw) {
-                self::insertResults($singaporeArray,$drawDate);
+            //Insert Results
+            $dbTrans = CompanyDraw::getDb()->beginTransaction();
+            try {
+                self::insertResults($magnumArray,$drawDate);
+                self::insertResults($pmpArray,$drawDate);
+                self::insertResults($totoArray,$drawDate);
+                if (!$specialDraw) {
+                    self::insertResults($singaporeArray,$drawDate);
+                }
+                self::insertResults($sabahArray,$drawDate);
+                self::insertResults($sarawakArray,$drawDate);
+                self::insertResults($sandakanArray,$drawDate);
+                self::insertResults($toto5dArray,$drawDate);
+                self::insertResults($toto6dArray,$drawDate);
+
+                $dbTrans->commit();
+            } catch (\Throwable $e) {
+                $dbTrans->rollBack();
+                throw $e;
             }
-            self::insertResults($sabahArray,$drawDate);
-            self::insertResults($sarawakArray,$drawDate);
-            self::insertResults($sandakanArray,$drawDate);
-            self::insertResults($toto5dArray,$drawDate);
-            self::insertResults($toto6dArray,$drawDate);
-
-            $dbTrans->commit();
-        } catch (\Throwable $e) {
-            $dbTrans->rollBack();
-            throw $e;
         }
 
         //Process Results

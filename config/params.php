@@ -22,7 +22,7 @@ return [
         'TOKEN_VALIDITY' => 86400,
         'SERVER_NAME' => $serverName,
         'SECRET_KEY' => 'gkFjY/HfejuhrECU4TZkF1V5ABqfeT+EyZYwxfu/fodWUcO31DXM1A2YkFJj4p70GULv9yv014nnZPJBYDleiQ==',
-        'RECORDS_PER_PAGE' => 10,
+        'RECORDS_PER_PAGE' => 50,
         'EMAIL_FROM' => 'support@tbt88.org',
         'MUTEX_LOCK_TIMEOUT' => 60, //60 seconds,
         'JOIN_TYPE' => [

@@ -744,6 +744,9 @@ class BetController extends ActiveController
         $request = Yii::$app->request;
         $params = $request->get();
 
+        $mode = $params["mode"] ?? 1; //1 - Get the records (with pagination applied); 2 - Get total items count
+        $pageSize = $params["pageSize"] ?? Yii::$app->params["GLOBAL"]["RECORDS_PER_PAGE"];
+        $offset = $params["offset"] ?? 0;
         $drawDateStart = !empty($params["drawDateStart"]) ? Date('Y-m-d 00:00:00', strtotime($params["drawDateStart"])) : null;
         $drawDateEnd = !empty($params["drawDateEnd"]) ? Date('Y-m-d 23:59:59', strtotime($params["drawDateEnd"])) : null;
         $betDateStart = !empty($params["betDateStart"]) ? Date('Y-m-d 00:00:00', strtotime($params["betDateStart"])) : null;
@@ -785,7 +788,14 @@ class BetController extends ActiveController
         if (!empty($betDateStart) && !empty($betDateEnd)) {
             $bets = $bets->andWhere(['between','createdAt',$betDateStart,$betDateEnd]);
         }
-        $bets = $bets->all();
+        if ($mode == 1) { //Get the records (with pagination applied)
+            $bets = $bets->limit($pageSize)
+                ->offset($offset)
+                ->all();
+        } else { //Get total items count
+            $bets = $bets->count();
+            return $bets;
+        }
 
         $result = [];
         for ($i=0;$i<count($bets);$i++) {
@@ -808,6 +818,9 @@ class BetController extends ActiveController
         $request = Yii::$app->request;
         $params = $request->get();
 
+        $mode = $params["mode"] ?? 1; //1 - Get the records (with pagination applied); 2 - Get total items count
+        $pageSize = $params["pageSize"] ?? Yii::$app->params["GLOBAL"]["RECORDS_PER_PAGE"];
+        $offset = $params["offset"] ?? 0;
         $drawDateStart = !empty($params["drawDateStart"]) ? Date('Y-m-d 00:00:00', strtotime($params["drawDateStart"])) : null;
         $drawDateEnd = !empty($params["drawDateEnd"]) ? Date('Y-m-d 23:59:59', strtotime($params["drawDateEnd"])) : null;
         $betDateStart = !empty($params["betDateStart"]) ? Date('Y-m-d 00:00:00', strtotime($params["betDateStart"])) : null;
@@ -847,7 +860,14 @@ class BetController extends ActiveController
         if (!empty($number)) {
             $bds = $bds->andWhere(['number'=>$number]);
         }
-        $bds = $bds->all();
+        if ($mode == 1) { //Get the records (with pagination applied)
+            $bds = $bds->limit($pageSize)
+                ->offset($offset)
+                ->all();
+        } else { //Get total items count
+            $bds = $bds->count();
+            return $bds;
+        }
 
         $result = [];
         $totalBig = $totalSmall = $total4a = $total4b = $total4c = $total4d = $total4e = $total4f = 0;
@@ -911,6 +931,9 @@ class BetController extends ActiveController
         $request = Yii::$app->request;
         $params = $request->get();
 
+        $mode = $params["mode"] ?? 1; //1 - Get the records (with pagination applied); 2 - Get total items count
+        $pageSize = $params["pageSize"] ?? Yii::$app->params["GLOBAL"]["RECORDS_PER_PAGE"];
+        $offset = $params["offset"] ?? 0;
         $drawDateStart = !empty($params["drawDateStart"]) ? Date('Y-m-d 00:00:00', strtotime($params["drawDateStart"])) : null;
         $drawDateEnd = !empty($params["drawDateEnd"]) ? Date('Y-m-d 23:59:59', strtotime($params["drawDateEnd"])) : null;
         $betDateStart = !empty($params["betDateStart"]) ? Date('Y-m-d 00:00:00', strtotime($params["betDateStart"])) : null;
@@ -950,7 +973,14 @@ class BetController extends ActiveController
         if (!empty($number)) {
             $bds = $bds->andWhere(['number'=>$number]);
         }
-        $bds = $bds->all();
+        if ($mode == 1) { //Get the records (with pagination applied)
+            $bds = $bds->limit($pageSize)
+                ->offset($offset)
+                ->all();
+        } else { //Get total items count
+            $bds = $bds->count();
+            return $bds;
+        }
 
         $result = [];
         $totalBig = $totalSmall = $total4a = $total4b = $total4c = $total4d = $total4e = $total4f = 0;
