@@ -2,6 +2,7 @@
 
 namespace app\models;
 
+use app\components\ccf\CommonClass;
 use Yii;
 use yii\behaviors\BlameableBehavior;
 use yii\behaviors\TimestampBehavior;
@@ -90,6 +91,9 @@ use yii\db\Expression;
  *
  * @property User $user
  * @property Package $package
+ * @property float $realtimeOutstanding
+ * @property float $realtimeBalance
+ *
  */
 class UserDetail extends \yii\db\ActiveRecord
 {
@@ -251,18 +255,6 @@ class UserDetail extends \yii\db\ActiveRecord
 
         $fields['outstandingBet'] = function ($model) {
             return floatval($model->outstandingBet); //Cast string to float/double type
-        };
-
-        $fields['outstandingBetDownline'] = function ($model) {
-            $result = 0;
-            if ($model->user->userType == Yii::$app->params['USER']['TYPE']['AGENT']) {
-                //Get the downline players outstanding
-                $players = $model->user->players;
-                foreach ($players as $player) {
-                    $result += $player->userDetail->outstandingBet;
-                }
-            }
-            return floatval($result); //Cast string to float/double type
         };
 
         $fields['extra4dCommRate'] = function ($model) {
@@ -508,6 +500,18 @@ class UserDetail extends \yii\db\ActiveRecord
             return $model->package;
         };
 
+        $extraFields['realtimeOutstanding'] = function($model) {
+            return $model->realtimeOutstanding;
+        };
+
+        $extraFields['realtimeBalance'] = function($model) {
+            return $model->realtimeBalance;
+        };
+
+        $extraFields['realtimeOutstandingDownline'] = function ($model) {
+            return $model->realtimeOutstandingDownline;
+        };
+
         return $extraFields;
     }
 
@@ -525,5 +529,68 @@ class UserDetail extends \yii\db\ActiveRecord
     public function getPackage()
     {
         return $this->hasOne(Package::class, ['id' => 'packageId']);
+    }
+
+    /**
+     * @return float
+     */
+    public function getRealtimeOutstanding() {
+        $outstanding = 0;
+        //Proceed to look for outstanding bets which haven't been processed
+        $btStatusArray = array(Yii::$app->params['BET']['DETAIL']['STATUS']['ACCEPTED'],Yii::$app->params['BET']['DETAIL']['STATUS']['LIMITED']);
+        $betDetails = BetDetail::find()
+            ->where(['createdBy'=>$this->userId])
+            ->andWhere(['status'=>$btStatusArray,'won'=>null])
+            ->all();
+        foreach ($betDetails as $betDetail) {
+            $outstanding += $betDetail->totalSales;
+        }
+        return round($outstanding,2);
+    }
+
+    /**
+     * @return float
+     */
+    public function getRealtimeBalance() {
+        list($startDate,$endDate) = CommonClass::getCurrentWeekStartEndDates();
+        //Only look for accepted and limited bets
+        $btStatusArray = array(Yii::$app->params['BET']['DETAIL']['STATUS']['ACCEPTED'],Yii::$app->params['BET']['DETAIL']['STATUS']['LIMITED']);
+        $betDetails = BetDetail::find()
+            ->where(['createdBy'=>Yii::$app->user->identity->getId()])
+            ->andWhere(['between','drawDate',$startDate,$endDate])
+            ->andWhere(['status'=>$btStatusArray])
+            ->andWhere(['not',['won'=>null]]) //Only include those processed bets
+            ->all();
+
+        $grandTotalSales = 0;
+        $grandTotalCommission = 0;
+        $grandTotalWin = 0;
+        foreach ($betDetails as $betDetail) {
+            $totalSales = $betDetail->totalSales;
+            $totalCommission = $betDetail->totalCommission;
+            $totalWin = $betDetail->totalWin;
+
+            $grandTotalSales += $totalSales;
+            $grandTotalCommission += $totalCommission;
+            $grandTotalWin += $totalWin;
+        }
+        $grandTotalBalance = $grandTotalSales-$grandTotalCommission-$grandTotalWin;
+
+        return round($grandTotalBalance,2);
+    }
+
+    /**
+     * @return float
+     */
+    public function getRealtimeOutstandingDownline() {
+        $outstanding = 0;
+        if ($this->user->userType == Yii::$app->params['USER']['TYPE']['AGENT']) {
+            //Get the downline players outstanding
+            $players = $this->user->players;
+            foreach ($players as $player) {
+                $outstanding += $player->userDetail->realtimeOutstanding;
+            }
+        }
+        return round($outstanding,2);
     }
 }
