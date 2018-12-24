@@ -751,5 +751,15 @@ class CommonClass extends BaseObject
         $d = \DateTime::createFromFormat($format, $date);
         // The Y ( 4 digits year ) returns TRUE for any integer with any number of digits so changing the comparison from == to === fixes the issue.
         return $d && $d->format($format) === $date;
+
+    }
+
+    //Get Start and End Dates of current week
+    public static function getCurrentWeekStartEndDates() {
+        $startDate = new \DateTime("last sunday"); // Edit
+        $startDate->modify('+1 day'); // Edit
+        $endDate = clone($startDate);
+        $endDate->modify('+6 days');
+        return array($startDate->format('Y-m-d'), $endDate->format('Y-m-d'));
     }
 }

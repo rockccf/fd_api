@@ -1481,10 +1481,10 @@ class BetController extends Controller
             $bet->totalWin += $grandTotalWin;
             $bet->totalSuperiorBonus += $grandTotalSuperiorBonus;
             //Make sure all the betDetails under the bet are processed
-            $oustandingBdCount = BetDetail::find()
+            $outstandingBdCount = BetDetail::find()
                 ->where(['betId'=>$bet->id,'won'=>null])
                 ->count();
-            if ($oustandingBdCount <= 0) {
+            if ($outstandingBdCount <= 0) {
                 $bet->status = Yii::$app->params['BET']['STATUS']['PROCESSED'];
             }
             if (!$bet->save()) {
