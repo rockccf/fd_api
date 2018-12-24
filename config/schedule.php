@@ -12,4 +12,4 @@ $schedule->command('bet')->dailyAt('20:45');
 $schedule->command('bet')->dailyAt('21:00');
 
 // Schedule weekly job for specific day (0-6) and time...
-$schedule->command('admin/reset-user-balance')->weeklyOn(1, '1:00');
+$schedule->command('admin/reset-user-balance')->weeklyOn(1, '00:01');
