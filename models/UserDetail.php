@@ -575,6 +575,7 @@ class UserDetail extends \yii\db\ActiveRecord
             $grandTotalWin += $totalWin;
         }
         $grandTotalBalance = $grandTotalSales-$grandTotalCommission-$grandTotalWin;
+        $grandTotalBalance = $grandTotalBalance*-1; //For calculation purposes
 
         return round($grandTotalBalance,2);
     }
