@@ -383,8 +383,6 @@ class ReportClass extends BaseObject
                     $bdws = $bd->betDetailWins;
                     $drawDate = new \DateTime($bd->drawDate);
                     $drawDate = $drawDate->format('Y-m-d');
-                    $betDate = new \DateTime($bd->createdAt);
-                    $betDate = $betDate->format('Y-m-d');
                     foreach ($bdws as $bdw) {
                         $winPrizeType = null;
                         $winPrizeAmount = null;
@@ -411,7 +409,7 @@ class ReportClass extends BaseObject
                             "threeDigitPrize" => $threeDigitPrize,
                             "prizeAmount" => $bdw->winPrizeAmount,
                             "totalWin" => $bdw->totalWin,
-                            "betDate" => $betDate,
+                            "betDate" => $bd->createdAt,
                             "remarks" => $bd->remarks
                         ];
 
@@ -433,6 +431,8 @@ class ReportClass extends BaseObject
 
                     foreach ($bds as $bd) {
                         $bdws = $bd->betDetailWins;
+                        $drawDate = new \DateTime($bd->drawDate);
+                        $drawDate = $drawDate->format('Y-m-d');
                         foreach ($bdws as $bdw) {
                             $winPrizeType = null;
                             $winPrizeAmount = null;
@@ -451,7 +451,7 @@ class ReportClass extends BaseObject
 
                             $rowArray[] = [
                                 "username" => $player->username,
-                                "drawDate" => $bd->drawDate,
+                                "drawDate" => $drawDate,
                                 "company" => $bd->companyDraw->company->code,
                                 "number" => $bd->number,
                                 "betAmount" => $bdw->betAmount,
@@ -483,8 +483,6 @@ class ReportClass extends BaseObject
                 $bdws = $bd->betDetailWins;
                 $drawDate = new \DateTime($bd->drawDate);
                 $drawDate = $drawDate->format('Y-m-d');
-                $betDate = new \DateTime($bd->createdAt);
-                $betDate = $betDate->format('Y-m-d');
                 foreach ($bdws as $bdw) {
                     $winPrizeType = null;
                     $winPrizeAmount = null;
@@ -511,7 +509,7 @@ class ReportClass extends BaseObject
                         "threeDigitPrize" => $threeDigitPrize,
                         "prizeAmount" => $bdw->winPrizeAmount,
                         "totalWin" => $bdw->totalWin,
-                        "betDate" => $betDate,
+                        "betDate" => $bd->createdAt,
                         "remarks" => $bd->remarks
                     ];
 
@@ -533,6 +531,8 @@ class ReportClass extends BaseObject
 
                 foreach ($bds as $bd) {
                     $bdws = $bd->betDetailWins;
+                    $drawDate = new \DateTime($bd->drawDate);
+                    $drawDate = $drawDate->format('Y-m-d');
                     foreach ($bdws as $bdw) {
                         $winPrizeType = null;
                         $winPrizeAmount = null;
@@ -551,7 +551,7 @@ class ReportClass extends BaseObject
 
                         $rowArray[] = [
                             "username" => $player->username,
-                            "drawDate" => $bd->drawDate,
+                            "drawDate" => $drawDate,
                             "company" => $bd->companyDraw->company->code,
                             "number" => $bd->number,
                             "betAmount" => $bdw->betAmount,
@@ -580,6 +580,8 @@ class ReportClass extends BaseObject
 
             foreach ($bds as $bd) {
                 $bdws = $bd->betDetailWins;
+                $drawDate = new \DateTime($bd->drawDate);
+                $drawDate = $drawDate->format('Y-m-d');
                 foreach ($bdws as $bdw) {
                     $winPrizeType = null;
                     $winPrizeAmount = null;
@@ -598,7 +600,7 @@ class ReportClass extends BaseObject
 
                     $rowArray[] = [
                         "username" => Yii::$app->user->identity->username,
-                        "drawDate" => $bd->drawDate,
+                        "drawDate" => $drawDate,
                         "company" => $bd->companyDraw->company->code,
                         "number" => $bd->number,
                         "betAmount" => $bdw->betAmount,
