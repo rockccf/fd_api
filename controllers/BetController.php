@@ -776,7 +776,8 @@ class BetController extends ActiveController
         $bets = Bet::find()
             ->alias('b')
             ->where(['b.createdBy'=>$createdByArray])
-            ->with(['creator','betDetails']);
+            ->with(['creator','betDetails'])
+            ->orderBy('b.createdAt');
         if (!empty($drawDateStart) && !empty($drawDateEnd)) {
             $subquery = (new Query())
                 ->select('id')
