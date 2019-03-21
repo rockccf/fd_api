@@ -56,13 +56,13 @@ class BetController extends Controller
 
                 if ($specialDraw) { //Do not check singapore results as singapore does not have special draws
                     if (!self::checkCompanyResults($magnumArray) || !self::checkCompanyResults($pmpArray) || !self::checkCompanyResults($totoArray)
-                        || !self::checkCompanyResults($sarawakArray) || !self::checkCompanyResults($sandakanArray)
+                        || !self::checkCompanyResults($sarawakArray) //|| !self::checkCompanyResults($sandakanArray)
                         || !self::checkCompanyResults($sabahArray) || !self::checkCompanyResults($toto5dArray) || !self::checkCompanyResults($toto6dArray)) {
 
                         self::getResultsFromWin4D($specialDraw,$drawDate,$magnumArray,$pmpArray,$totoArray,$singaporeArray,$sabahArray,$sandakanArray,$sarawakArray,$toto5dArray,$toto6dArray);
 
                         if (!self::checkCompanyResults($magnumArray) || !self::checkCompanyResults($pmpArray) || !self::checkCompanyResults($totoArray)
-                            || !self::checkCompanyResults($sarawakArray) || !self::checkCompanyResults($sandakanArray)
+                            || !self::checkCompanyResults($sarawakArray) //|| !self::checkCompanyResults($sandakanArray)
                             || !self::checkCompanyResults($sabahArray) || !self::checkCompanyResults($toto5dArray) || !self::checkCompanyResults($toto6dArray)) {
                             if ($i == 3) {
                                 Yii::error("checkCompanyResults false.");
@@ -78,13 +78,13 @@ class BetController extends Controller
                     }
                 } else {
                     if (!self::checkCompanyResults($magnumArray) || !self::checkCompanyResults($pmpArray) || !self::checkCompanyResults($totoArray)
-                        || !self::checkCompanyResults($singaporeArray) || !self::checkCompanyResults($sarawakArray) || !self::checkCompanyResults($sandakanArray)
+                        || !self::checkCompanyResults($singaporeArray) || !self::checkCompanyResults($sarawakArray) //|| !self::checkCompanyResults($sandakanArray)
                         || !self::checkCompanyResults($sabahArray) || !self::checkCompanyResults($toto5dArray) || !self::checkCompanyResults($toto6dArray)) {
 
                         self::getResultsFromWin4D($specialDraw,$drawDate,$magnumArray,$pmpArray,$totoArray,$singaporeArray,$sabahArray,$sandakanArray,$sarawakArray,$toto5dArray,$toto6dArray);
 
                         if (!self::checkCompanyResults($magnumArray) || !self::checkCompanyResults($pmpArray) || !self::checkCompanyResults($totoArray)
-                            || !self::checkCompanyResults($singaporeArray) || !self::checkCompanyResults($sarawakArray) || !self::checkCompanyResults($sandakanArray)
+                            || !self::checkCompanyResults($singaporeArray) || !self::checkCompanyResults($sarawakArray) //|| !self::checkCompanyResults($sandakanArray)
                             || !self::checkCompanyResults($sabahArray) || !self::checkCompanyResults($toto5dArray) || !self::checkCompanyResults($toto6dArray)) {
                             if ($i == 3) {
                                 Yii::error("checkCompanyResults false.");
@@ -124,7 +124,7 @@ class BetController extends Controller
                 }
                 self::insertResults($sabahArray,$drawDate);
                 self::insertResults($sarawakArray,$drawDate);
-                self::insertResults($sandakanArray,$drawDate);
+                //self::insertResults($sandakanArray,$drawDate); //Temporarily taken out by cfchong on 17-03-2019
                 self::insertResults($toto5dArray,$drawDate);
                 self::insertResults($toto6dArray,$drawDate);
 
@@ -363,8 +363,6 @@ class BetController extends Controller
     private function getResultsFromCheck4D($specialDraw,$drawDate,&$magnumArray,&$pmpArray,&$totoArray,&$singaporeArray,&$sabahArray,&$sandakanArray,&$sarawakArray,&$toto5dArray,&$toto6dArray) {
         $client = new Client();
 
-        $pmResultsReady = $emResultsReady = $singResultsReady = false;
-
         /* Magnum, PMP, Toto, Toto 5D & 6D */
         $crawler = $client->request('GET', 'https://www.check4d.com/');
         /*
@@ -594,18 +592,27 @@ class BetController extends Controller
                 continue;
             }
 
-            $date = \DateTime::createFromFormat('d-m-Y', $value);
-            $date->setTime(0,0);
-            if ($date != $drawDate) {
-                Yii::error("dateObj, date is not the same as drawDate. i = $i, value = $value");
-                return ExitCode::SOFTWARE;
-            }
+            //Added by cfchong on 17-03-2019
+            //Ignore sandakan for now
+            if ($i > 2) {
+                $date = \DateTime::createFromFormat('d-m-Y', $value);
+                $date->setTime(0,0);
+                if ($date != $drawDate) {
+                    Yii::error("dateObj, date is not the same as drawDate. i = $i, value = $value");
+                    return ExitCode::SOFTWARE;
+                }
 
-            $validDatesCount++;
+                $validDatesCount++;
+            }
         }
 
         //Make sure there are 3 dates found
-        if ($validDatesCount != 3) {
+        /*if ($validDatesCount != 3) {
+            Yii::error("dates, $validDatesCount dates found.");
+            return ExitCode::SOFTWARE;
+        }*/
+        //Ignore Sandakan for now, added by cfchong on 17-03-2019
+        if ($validDatesCount != 2) {
             Yii::error("dates, $validDatesCount dates found.");
             return ExitCode::SOFTWARE;
         }
@@ -814,6 +821,7 @@ class BetController extends Controller
         $dates = $crawler->filter('b.f_16'); //Draw dates for all the companies except 5d/6d
         $validDatesCount = 0;
         $i = 0;
+        
         foreach ($dates as $dateObj) {
             $i++;
             $value = trim($dateObj->nodeValue);
@@ -854,7 +862,6 @@ class BetController extends Controller
                 return ExitCode::SOFTWARE;
             }
         }
-
 
         $sixdDate = $crawler->filter('td.resultdrawdate'); //Draw date for toto 5d/6d
         $validDatesCount = 0;
