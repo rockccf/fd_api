@@ -18,7 +18,7 @@ if (YII_ENV_PROD) {
 
 return [
     'GLOBAL' => [
-        'API_VERSION' => '1.2.4',//API Release Version
+        'API_VERSION' => '1.2.5',//API Release Version
         'TOKEN_VALIDITY' => 86400,
         'SERVER_NAME' => $serverName,
         'SECRET_KEY' => 'gkFjY/HfejuhrECU4TZkF1V5ABqfeT+EyZYwxfu/fodWUcO31DXM1A2YkFJj4p70GULv9yv014nnZPJBYDleiQ==',
@@ -49,6 +49,7 @@ return [
             'WIN_LOSS_DETAILS' => 1000,
             'DRAW_WINNING_NUMBER' => 1001,
             'COMPANY_DRAW_RESULTS' => 1002,
+            'BET_AMOUNT_NUMBER' => 1003,
             'MASTER' => [ //Starts with 2000
 
             ],
