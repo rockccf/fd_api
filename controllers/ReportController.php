@@ -141,6 +141,9 @@ class ReportController extends ActiveController
             case Yii::$app->params['FILE_TEMPLATE']['REPORT']['COMPANY_DRAW_RESULTS']:
                 $resultArray = ReportClass::getCompanyDrawResults($extraParams);
                 break;
+            case Yii::$app->params['FILE_TEMPLATE']['REPORT']['BET_AMOUNT_NUMBER']:
+                $resultArray = ReportClass::getBetAmountNumber($extraParams);
+                break;
         }
 
         return $resultArray;
