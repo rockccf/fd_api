@@ -847,12 +847,12 @@ class ReportClass extends BaseObject
     /*
      * Author : Chong Chee Fei
      * Created At : 2019-03-21
-     * Report : ['FILE_TEMPLATE']['REPORT']['BET_AMOUNT_NUMBER']
+     * Report : ['FILE_TEMPLATE']['REPORT']['MASTER']['BET_SUM_AMOUNT_NUMBER']
      * Format : Array
      * Description :
      * Construct content for the report and return the content as array
      */
-    public static function getBetAmountNumber($params) {
+    public static function getMasterBetSumAmountNumber($params) {
         $result = $rowArray = [];
         $drawDateStart = !empty($params["drawDateStart"]) ? Date('Y-m-d 00:00:00', strtotime($params["drawDateStart"])) : null;
         $drawDateEnd = !empty($params["drawDateEnd"]) ? Date('Y-m-d 00:00:00', strtotime($params["drawDateEnd"])) : null;
@@ -873,288 +873,64 @@ class ReportClass extends BaseObject
         $amount5d = $params["5d"] ?? null;
         $amount6d = $params["6d"] ?? null;
 
-        if (Yii::$app->user->identity->userType == Yii::$app->params['USER']['TYPE']['MASTER']) {
-            //Get all the agents under the master
-            $agents = User::findAll(['masterId'=>Yii::$app->user->identity->masterId,'userType'=>Yii::$app->params['USER']['TYPE']['AGENT']]);
-            foreach ($agents as $agent) {
-                $bds = BetDetail::find()
-                    ->alias('bd')
-                    ->with(['companyDraw.company'])
-                    ->where(['bd.createdBy'=>$agent->id])
-                    ->andWhere(['between','bd.drawDate',$drawDateStart,$drawDateEnd])
-                    ->orderBy('bd.createdBy,bd.drawDate,bd.number');
-                !empty($big) ? $bds->andWhere(['>=','big',$big]) : null;
-                !empty($small) ? $bds->andWhere(['>=','small',$small]) : null;
-                !empty($amount4a) ? $bds->andWhere(['>=','4a',$amount4a]) : null;
-                !empty($amount4b) ? $bds->andWhere(['>=','4b',$amount4b]) : null;
-                !empty($amount4c) ? $bds->andWhere(['>=','4c',$amount4c]) : null;
-                !empty($amount4d) ? $bds->andWhere(['>=','4d',$amount4d]) : null;
-                !empty($amount4e) ? $bds->andWhere(['>=','4e',$amount4e]) : null;
-                !empty($amount4f) ? $bds->andWhere(['>=','4f',$amount4f]) : null;
-                !empty($amount3abc) ? $bds->andWhere(['>=','3abc',$amount3abc]) : null;
-                !empty($amount3a) ? $bds->andWhere(['>=','3a',$amount3a]) : null;
-                !empty($amount3b) ? $bds->andWhere(['>=','3b',$amount3b]) : null;
-                !empty($amount3c) ? $bds->andWhere(['>=','3c',$amount3c]) : null;
-                !empty($amount3d) ? $bds->andWhere(['>=','3d',$amount3d]) : null;
-                !empty($amount3e) ? $bds->andWhere(['>=','3e',$amount3e]) : null;
-                !empty($amount5d) ? $bds->andWhere(['>=','5d',$amount5d]) : null;
-                !empty($amount6d) ? $bds->andWhere(['>=','6d',$amount6d]) : null;
-                $bds = $bds->all();
+        //Get all the agents under the master
+        $masterId = Yii::$app->user->identity->masterId;
 
-                foreach ($bds as $bd) {
-                    $drawDate = new \DateTime($bd->drawDate);
-                    $drawDate = $drawDate->format('Y-m-d');
+        $rows = (new Query())
+            ->select('bd.number, bd.drawDate, c.code, sum(big) as big, sum(small) as small')
+            ->addSelect('sum(4a) as 4a, sum(4b) as 4b, sum(4c) as 4c, sum(4d) as 4d, sum(4e) as 4e, sum(4f) as 4f')
+            ->addSelect('sum(3abc) as 3abc, sum(3a) as 3a, sum(3b) as 3b, sum(3c) as 3c, sum(3d) as 3d, sum(3e) as 3e')
+            ->addSelect('sum(5d) as 5d, sum(6d) as 6d')
+            ->from(['bet b', 'bet_detail bd', 'company c', 'company_draw cd'])
+            ->where(['between','bd.drawDate',$drawDateStart,$drawDateEnd])
+            ->andWhere(['b.masterId' => $masterId])
+            ->andWhere('bd.betId = b.id')
+            ->andWhere('bd.companyDrawId = cd.id and cd.companyId = c.id')
+            ->orderBy('bd.number,bd.drawDate,c.code')
+            ->groupBy('bd.number,bd.drawDate,c.code');
+        !empty($big) ? $rows->having(['>=','sum(big)',$big]) : null;
+        !empty($small) ? $rows->having(['>=','sum(small)',$small]) : null;
+        !empty($amount4a) ? $rows->having(['>=','sum(4a)',$amount4a]) : null;
+        !empty($amount4b) ? $rows->having(['>=','sum(4b)',$amount4b]) : null;
+        !empty($amount4c) ? $rows->having(['>=','sum(4c)',$amount4c]) : null;
+        !empty($amount4d) ? $rows->having(['>=','sum(4d)',$amount4d]) : null;
+        !empty($amount4e) ? $rows->having(['>=','sum(4e)',$amount4e]) : null;
+        !empty($amount4f) ? $rows->having(['>=','sum(4f)',$amount4f]) : null;
+        !empty($amount3abc) ? $rows->having(['>=','sum(3abc)',$amount3abc]) : null;
+        !empty($amount3a) ? $rows->having(['>=','sum(3a)',$amount3a]) : null;
+        !empty($amount3b) ? $rows->having(['>=','sum(3b)',$amount3b]) : null;
+        !empty($amount3c) ? $rows->having(['>=','sum(3c)',$amount3c]) : null;
+        !empty($amount3d) ? $rows->having(['>=','sum(3d)',$amount3d]) : null;
+        !empty($amount3e) ? $rows->having(['>=','sum(3e)',$amount3e]) : null;
+        !empty($amount5d) ? $rows->having(['>=','sum(5d)',$amount5d]) : null;
+        !empty($amount6d) ? $rows->having(['>=','sum(6d)',$amount6d]) : null;
+        $rows = $rows->all();
 
-                    $rowArray[] = [
-                        "username" => $agent->username,
-                        "drawDate" => $drawDate,
-                        "betDate" => $bd->createdAt,
-                        "company" => $bd->companyDraw->company->code,
-                        "number" => $bd->number,
-                        "big" => $bd->big,
-                        "small" => $bd->small,
-                        "4a" => $bd->{'4a'},
-                        "4b" => $bd->{'4b'},
-                        "4c" => $bd->{'4c'},
-                        "4d" => $bd->{'4d'},
-                        "4e" => $bd->{'4e'},
-                        "4f" => $bd->{'4f'},
-                        "3abc" => $bd->{'3abc'},
-                        "3a" => $bd->{'3a'},
-                        "3b" => $bd->{'3b'},
-                        "3c" => $bd->{'3c'},
-                        "3d" => $bd->{'3d'},
-                        "3e" => $bd->{'3e'},
-                        "5d" => $bd->{'5d'},
-                        "6d" => $bd->{'6d'},
-                        "remarks" => $bd->remarks
-                    ];
-                }
+        foreach ($rows as $row) {
+            $drawDate = new \DateTime($row["drawDate"]);
+            $drawDate = $drawDate->format('Y-m-d');
 
-                //Proceed to calculate the players under this agent account
-                $players = $agent->players;
-                foreach ($players as $player) {
-                    $bds = BetDetail::find()
-                        ->alias('bd')
-                        ->with(['companyDraw.company'])
-                        ->where(['bd.createdBy'=>$player->id])
-                        ->andWhere(['between','bd.drawDate',$drawDateStart,$drawDateEnd])
-                        ->orderBy('bd.createdBy,bd.drawDate,bd.number');
-                    !empty($big) ? $bds->andWhere(['>=','big',$big]) : null;
-                    !empty($small) ? $bds->andWhere(['>=','small',$small]) : null;
-                    !empty($amount4a) ? $bds->andWhere(['>=','4a',$amount4a]) : null;
-                    !empty($amount4b) ? $bds->andWhere(['>=','4b',$amount4b]) : null;
-                    !empty($amount4c) ? $bds->andWhere(['>=','4c',$amount4c]) : null;
-                    !empty($amount4d) ? $bds->andWhere(['>=','4d',$amount4d]) : null;
-                    !empty($amount4e) ? $bds->andWhere(['>=','4e',$amount4e]) : null;
-                    !empty($amount4f) ? $bds->andWhere(['>=','4f',$amount4f]) : null;
-                    !empty($amount3abc) ? $bds->andWhere(['>=','3abc',$amount3abc]) : null;
-                    !empty($amount3a) ? $bds->andWhere(['>=','3a',$amount3a]) : null;
-                    !empty($amount3b) ? $bds->andWhere(['>=','3b',$amount3b]) : null;
-                    !empty($amount3c) ? $bds->andWhere(['>=','3c',$amount3c]) : null;
-                    !empty($amount3d) ? $bds->andWhere(['>=','3d',$amount3d]) : null;
-                    !empty($amount3e) ? $bds->andWhere(['>=','3e',$amount3e]) : null;
-                    !empty($amount5d) ? $bds->andWhere(['>=','5d',$amount5d]) : null;
-                    !empty($amount6d) ? $bds->andWhere(['>=','6d',$amount6d]) : null;
-                    $bds = $bds->all();
-
-                    foreach ($bds as $bd) {
-                        $drawDate = new \DateTime($bd->drawDate);
-                        $drawDate = $drawDate->format('Y-m-d');
-
-                        $rowArray[] = [
-                            "username" => $player->username,
-                            "drawDate" => $drawDate,
-                            "betDate" => $bd->createdAt,
-                            "company" => $bd->companyDraw->company->code,
-                            "number" => $bd->number,
-                            "big" => $bd->big,
-                            "small" => $bd->small,
-                            "4a" => $bd->{'4a'},
-                            "4b" => $bd->{'4b'},
-                            "4c" => $bd->{'4c'},
-                            "4d" => $bd->{'4d'},
-                            "4e" => $bd->{'4e'},
-                            "4f" => $bd->{'4f'},
-                            "3abc" => $bd->{'3abc'},
-                            "3a" => $bd->{'3a'},
-                            "3b" => $bd->{'3b'},
-                            "3c" => $bd->{'3c'},
-                            "3d" => $bd->{'3d'},
-                            "3e" => $bd->{'3e'},
-                            "5d" => $bd->{'5d'},
-                            "6d" => $bd->{'6d'},
-                            "remarks" => $bd->remarks
-                        ];
-                    }
-                }
-            }
-        } else if (Yii::$app->user->identity->userType == Yii::$app->params['USER']['TYPE']['AGENT']) {
-            $bds = BetDetail::find()
-                ->alias('bd')
-                ->with(['companyDraw.company'])
-                ->where(['bd.createdBy'=>Yii::$app->user->identity->getId()])
-                ->andWhere(['between','bd.drawDate',$drawDateStart,$drawDateEnd])
-                ->orderBy('bd.createdBy,bd.drawDate,bd.number');
-            !empty($big) ? $bds->andWhere(['>=','big',$big]) : null;
-            !empty($small) ? $bds->andWhere(['>=','small',$small]) : null;
-            !empty($amount4a) ? $bds->andWhere(['>=','4a',$amount4a]) : null;
-            !empty($amount4b) ? $bds->andWhere(['>=','4b',$amount4b]) : null;
-            !empty($amount4c) ? $bds->andWhere(['>=','4c',$amount4c]) : null;
-            !empty($amount4d) ? $bds->andWhere(['>=','4d',$amount4d]) : null;
-            !empty($amount4e) ? $bds->andWhere(['>=','4e',$amount4e]) : null;
-            !empty($amount4f) ? $bds->andWhere(['>=','4f',$amount4f]) : null;
-            !empty($amount3abc) ? $bds->andWhere(['>=','3abc',$amount3abc]) : null;
-            !empty($amount3a) ? $bds->andWhere(['>=','3a',$amount3a]) : null;
-            !empty($amount3b) ? $bds->andWhere(['>=','3b',$amount3b]) : null;
-            !empty($amount3c) ? $bds->andWhere(['>=','3c',$amount3c]) : null;
-            !empty($amount3d) ? $bds->andWhere(['>=','3d',$amount3d]) : null;
-            !empty($amount3e) ? $bds->andWhere(['>=','3e',$amount3e]) : null;
-            !empty($amount5d) ? $bds->andWhere(['>=','5d',$amount5d]) : null;
-            !empty($amount6d) ? $bds->andWhere(['>=','6d',$amount6d]) : null;
-            $bds = $bds->all();
-
-            foreach ($bds as $bd) {
-                $drawDate = new \DateTime($bd->drawDate);
-                $drawDate = $drawDate->format('Y-m-d');
-
-                $rowArray[] = [
-                    "username" => Yii::$app->user->identity->username,
-                    "drawDate" => $drawDate,
-                    "betDate" => $bd->createdAt,
-                    "company" => $bd->companyDraw->company->code,
-                    "number" => $bd->number,
-                    "big" => $bd->big,
-                    "small" => $bd->small,
-                    "4a" => $bd->{'4a'},
-                    "4b" => $bd->{'4b'},
-                    "4c" => $bd->{'4c'},
-                    "4d" => $bd->{'4d'},
-                    "4e" => $bd->{'4e'},
-                    "4f" => $bd->{'4f'},
-                    "3abc" => $bd->{'3abc'},
-                    "3a" => $bd->{'3a'},
-                    "3b" => $bd->{'3b'},
-                    "3c" => $bd->{'3c'},
-                    "3d" => $bd->{'3d'},
-                    "3e" => $bd->{'3e'},
-                    "5d" => $bd->{'5d'},
-                    "6d" => $bd->{'6d'},
-                    "remarks" => $bd->remarks
-                ];
-            }
-
-            //Proceed to calculate the players under this agent account
-            $players = Yii::$app->user->identity->players;
-            foreach ($players as $player) {
-                $bds = BetDetail::find()
-                    ->alias('bd')
-                    ->with(['companyDraw.company'])
-                    ->where(['bd.createdBy'=>$player->id])
-                    ->andWhere(['between','bd.drawDate',$drawDateStart,$drawDateEnd])
-                    ->orderBy('bd.createdBy,bd.drawDate,bd.number');
-                !empty($big) ? $bds->andWhere(['>=','big',$big]) : null;
-                !empty($small) ? $bds->andWhere(['>=','small',$small]) : null;
-                !empty($amount4a) ? $bds->andWhere(['>=','4a',$amount4a]) : null;
-                !empty($amount4b) ? $bds->andWhere(['>=','4b',$amount4b]) : null;
-                !empty($amount4c) ? $bds->andWhere(['>=','4c',$amount4c]) : null;
-                !empty($amount4d) ? $bds->andWhere(['>=','4d',$amount4d]) : null;
-                !empty($amount4e) ? $bds->andWhere(['>=','4e',$amount4e]) : null;
-                !empty($amount4f) ? $bds->andWhere(['>=','4f',$amount4f]) : null;
-                !empty($amount3abc) ? $bds->andWhere(['>=','3abc',$amount3abc]) : null;
-                !empty($amount3a) ? $bds->andWhere(['>=','3a',$amount3a]) : null;
-                !empty($amount3b) ? $bds->andWhere(['>=','3b',$amount3b]) : null;
-                !empty($amount3c) ? $bds->andWhere(['>=','3c',$amount3c]) : null;
-                !empty($amount3d) ? $bds->andWhere(['>=','3d',$amount3d]) : null;
-                !empty($amount3e) ? $bds->andWhere(['>=','3e',$amount3e]) : null;
-                !empty($amount5d) ? $bds->andWhere(['>=','5d',$amount5d]) : null;
-                !empty($amount6d) ? $bds->andWhere(['>=','6d',$amount6d]) : null;
-                $bds = $bds->all();
-
-                foreach ($bds as $bd) {
-                    $drawDate = new \DateTime($bd->drawDate);
-                    $drawDate = $drawDate->format('Y-m-d');
-
-                    $rowArray[] = [
-                        "username" => $player->username,
-                        "drawDate" => $drawDate,
-                        "betDate" => $bd->createdAt,
-                        "company" => $bd->companyDraw->company->code,
-                        "number" => $bd->number,
-                        "big" => $bd->big,
-                        "small" => $bd->small,
-                        "4a" => $bd->{'4a'},
-                        "4b" => $bd->{'4b'},
-                        "4c" => $bd->{'4c'},
-                        "4d" => $bd->{'4d'},
-                        "4e" => $bd->{'4e'},
-                        "4f" => $bd->{'4f'},
-                        "3abc" => $bd->{'3abc'},
-                        "3a" => $bd->{'3a'},
-                        "3b" => $bd->{'3b'},
-                        "3c" => $bd->{'3c'},
-                        "3d" => $bd->{'3d'},
-                        "3e" => $bd->{'3e'},
-                        "5d" => $bd->{'5d'},
-                        "6d" => $bd->{'6d'},
-                        "remarks" => $bd->remarks
-                    ];
-                }
-            }
-        } else if (Yii::$app->user->identity->userType == Yii::$app->params['USER']['TYPE']['PLAYER']) {
-            $bds = BetDetail::find()
-                ->alias('bd')
-                ->with(['companyDraw.company'])
-                ->where(['bd.createdBy'=>Yii::$app->user->identity->getId()])
-                ->andWhere(['between','bd.drawDate',$drawDateStart,$drawDateEnd])
-                ->orderBy('bd.createdBy,bd.drawDate,bd.number');
-            !empty($big) ? $bds->andWhere(['>=','big',$big]) : null;
-            !empty($small) ? $bds->andWhere(['>=','small',$small]) : null;
-            !empty($amount4a) ? $bds->andWhere(['>=','4a',$amount4a]) : null;
-            !empty($amount4b) ? $bds->andWhere(['>=','4b',$amount4b]) : null;
-            !empty($amount4c) ? $bds->andWhere(['>=','4c',$amount4c]) : null;
-            !empty($amount4d) ? $bds->andWhere(['>=','4d',$amount4d]) : null;
-            !empty($amount4e) ? $bds->andWhere(['>=','4e',$amount4e]) : null;
-            !empty($amount4f) ? $bds->andWhere(['>=','4f',$amount4f]) : null;
-            !empty($amount3abc) ? $bds->andWhere(['>=','3abc',$amount3abc]) : null;
-            !empty($amount3a) ? $bds->andWhere(['>=','3a',$amount3a]) : null;
-            !empty($amount3b) ? $bds->andWhere(['>=','3b',$amount3b]) : null;
-            !empty($amount3c) ? $bds->andWhere(['>=','3c',$amount3c]) : null;
-            !empty($amount3d) ? $bds->andWhere(['>=','3d',$amount3d]) : null;
-            !empty($amount3e) ? $bds->andWhere(['>=','3e',$amount3e]) : null;
-            !empty($amount5d) ? $bds->andWhere(['>=','5d',$amount5d]) : null;
-            !empty($amount6d) ? $bds->andWhere(['>=','6d',$amount6d]) : null;
-            $bds = $bds->all();
-
-            foreach ($bds as $bd) {
-                $drawDate = new \DateTime($bd->drawDate);
-                $drawDate = $drawDate->format('Y-m-d');
-
-                $rowArray[] = [
-                    "username" => Yii::$app->user->identity->username,
-                    "drawDate" => $drawDate,
-                    "betDate" => $bd->createdAt,
-                    "company" => $bd->companyDraw->company->code,
-                    "number" => $bd->number,
-                    "big" => $bd->big,
-                    "small" => $bd->small,
-                    "4a" => $bd->{'4a'},
-                    "4b" => $bd->{'4b'},
-                    "4c" => $bd->{'4c'},
-                    "4d" => $bd->{'4d'},
-                    "4e" => $bd->{'4e'},
-                    "4f" => $bd->{'4f'},
-                    "3abc" => $bd->{'3abc'},
-                    "3a" => $bd->{'3a'},
-                    "3b" => $bd->{'3b'},
-                    "3c" => $bd->{'3c'},
-                    "3d" => $bd->{'3d'},
-                    "3e" => $bd->{'3e'},
-                    "5d" => $bd->{'5d'},
-                    "6d" => $bd->{'6d'},
-                    "remarks" => $bd->remarks
-                ];
-            }
+            $rowArray[] = [
+                "drawDate" => $drawDate,
+                "company" => $row["code"],
+                "number" => $row["number"],
+                "big" => $row["big"],
+                "small" => $row["small"],
+                "4a" => $row["4a"],
+                "4b" => $row["4b"],
+                "4c" => $row["4c"],
+                "4d" => $row["4d"],
+                "4e" => $row["4e"],
+                "4f" => $row["4f"],
+                "3abc" => $row["3abc"],
+                "3a" => $row["3a"],
+                "3b" => $row["3b"],
+                "3c" => $row["3c"],
+                "3d" => $row["3d"],
+                "3e" => $row["3e"],
+                "5d" => $row["5d"],
+                "6d" => $row["6d"]
+            ];
         }
         $result["rowArray"] = $rowArray;
 
