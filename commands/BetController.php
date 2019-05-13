@@ -1163,25 +1163,128 @@ class BetController extends Controller
                             $totalWin += $result["winAmount"];
                             $totalSuperiorBonus += $result["superiorBonus"];
                         }
-                        if ($bdNumber == $cd->{'special1Prize'} || $bdNumber == $cd->{'special2Prize'} || $bdNumber == $cd->{'special3Prize'}
-                            || $bdNumber == $cd->{'special4Prize'} || $bdNumber == $cd->{'special5Prize'} || $bdNumber == $cd->{'special6Prize'}
-                            || $bdNumber == $cd->{'special7Prize'} || $bdNumber == $cd->{'special8Prize'} || $bdNumber == $cd->{'special9Prize'}
-                            || $bdNumber == $cd->{'special10Prize'}) {
+                        if ($bdNumber == $cd->{'special1Prize'}) {
                             $result = self::insertBetDetailWin($bdBig,Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['4D_BIG_STARTERS'],
                                 $package,$user,$bd->id);
                             $totalWin += $result["winAmount"];
                             $totalSuperiorBonus += $result["superiorBonus"];
                         }
-                        if ($bdNumber == $cd->{'consolation1Prize'} || $bdNumber == $cd->{'consolation2Prize'} || $bdNumber == $cd->{'consolation3Prize'}
-                            || $bdNumber == $cd->{'consolation4Prize'} || $bdNumber == $cd->{'consolation5Prize'} || $bdNumber == $cd->{'consolation6Prize'}
-                            || $bdNumber == $cd->{'consolation7Prize'} || $bdNumber == $cd->{'consolation8Prize'} || $bdNumber == $cd->{'consolation9Prize'}
-                            || $bdNumber == $cd->{'consolation10Prize'}) {
+                        if ($bdNumber == $cd->{'special2Prize'}) {
+                            $result = self::insertBetDetailWin($bdBig,Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['4D_BIG_STARTERS'],
+                                $package,$user,$bd->id);
+                            $totalWin += $result["winAmount"];
+                            $totalSuperiorBonus += $result["superiorBonus"];
+                        }
+                        if ($bdNumber == $cd->{'special3Prize'}) {
+                            $result = self::insertBetDetailWin($bdBig,Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['4D_BIG_STARTERS'],
+                                $package,$user,$bd->id);
+                            $totalWin += $result["winAmount"];
+                            $totalSuperiorBonus += $result["superiorBonus"];
+                        }
+                        if ($bdNumber == $cd->{'special4Prize'}) {
+                            $result = self::insertBetDetailWin($bdBig,Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['4D_BIG_STARTERS'],
+                                $package,$user,$bd->id);
+                            $totalWin += $result["winAmount"];
+                            $totalSuperiorBonus += $result["superiorBonus"];
+                        }
+                        if ($bdNumber == $cd->{'special5Prize'}) {
+                            $result = self::insertBetDetailWin($bdBig,Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['4D_BIG_STARTERS'],
+                                $package,$user,$bd->id);
+                            $totalWin += $result["winAmount"];
+                            $totalSuperiorBonus += $result["superiorBonus"];
+                        }
+                        if ($bdNumber == $cd->{'special6Prize'}) {
+                            $result = self::insertBetDetailWin($bdBig,Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['4D_BIG_STARTERS'],
+                                $package,$user,$bd->id);
+                            $totalWin += $result["winAmount"];
+                            $totalSuperiorBonus += $result["superiorBonus"];
+                        }
+                        if ($bdNumber == $cd->{'special7Prize'}) {
+                            $result = self::insertBetDetailWin($bdBig,Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['4D_BIG_STARTERS'],
+                                $package,$user,$bd->id);
+                            $totalWin += $result["winAmount"];
+                            $totalSuperiorBonus += $result["superiorBonus"];
+                        }
+                        if ($bdNumber == $cd->{'special18Prize'}) {
+                            $result = self::insertBetDetailWin($bdBig,Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['4D_BIG_STARTERS'],
+                                $package,$user,$bd->id);
+                            $totalWin += $result["winAmount"];
+                            $totalSuperiorBonus += $result["superiorBonus"];
+                        }
+                        if ($bdNumber == $cd->{'special9Prize'}) {
+                            $result = self::insertBetDetailWin($bdBig,Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['4D_BIG_STARTERS'],
+                                $package,$user,$bd->id);
+                            $totalWin += $result["winAmount"];
+                            $totalSuperiorBonus += $result["superiorBonus"];
+                        }
+                        if ($bdNumber == $cd->{'special10Prize'}) {
+                            $result = self::insertBetDetailWin($bdBig,Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['4D_BIG_STARTERS'],
+                                $package,$user,$bd->id);
+                            $totalWin += $result["winAmount"];
+                            $totalSuperiorBonus += $result["superiorBonus"];
+                        }
+                        if ($bdNumber == $cd->{'consolation1Prize'}) {
+                            $result = self::insertBetDetailWin($bdBig,Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['4D_BIG_CONSOLATION'],
+                                $package,$user,$bd->id);
+                            $totalWin += $result["winAmount"];
+                            $totalSuperiorBonus += $result["superiorBonus"];
+                        }
+                        if ($bdNumber == $cd->{'consolation2Prize'}) {
+                            $result = self::insertBetDetailWin($bdBig,Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['4D_BIG_CONSOLATION'],
+                                $package,$user,$bd->id);
+                            $totalWin += $result["winAmount"];
+                            $totalSuperiorBonus += $result["superiorBonus"];
+                        }
+                        if ($bdNumber == $cd->{'consolation3Prize'}) {
+                            $result = self::insertBetDetailWin($bdBig,Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['4D_BIG_CONSOLATION'],
+                                $package,$user,$bd->id);
+                            $totalWin += $result["winAmount"];
+                            $totalSuperiorBonus += $result["superiorBonus"];
+                        }
+                        if ($bdNumber == $cd->{'consolation4Prize'}) {
+                            $result = self::insertBetDetailWin($bdBig,Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['4D_BIG_CONSOLATION'],
+                                $package,$user,$bd->id);
+                            $totalWin += $result["winAmount"];
+                            $totalSuperiorBonus += $result["superiorBonus"];
+                        }
+                        if ($bdNumber == $cd->{'consolation5Prize'}) {
+                            $result = self::insertBetDetailWin($bdBig,Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['4D_BIG_CONSOLATION'],
+                                $package,$user,$bd->id);
+                            $totalWin += $result["winAmount"];
+                            $totalSuperiorBonus += $result["superiorBonus"];
+                        }
+                        if ($bdNumber == $cd->{'consolation6Prize'}) {
+                            $result = self::insertBetDetailWin($bdBig,Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['4D_BIG_CONSOLATION'],
+                                $package,$user,$bd->id);
+                            $totalWin += $result["winAmount"];
+                            $totalSuperiorBonus += $result["superiorBonus"];
+                        }
+                        if ($bdNumber == $cd->{'consolation7Prize'}) {
+                            $result = self::insertBetDetailWin($bdBig,Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['4D_BIG_CONSOLATION'],
+                                $package,$user,$bd->id);
+                            $totalWin += $result["winAmount"];
+                            $totalSuperiorBonus += $result["superiorBonus"];
+                        }
+                        if ($bdNumber == $cd->{'consolation8Prize'}) {
+                            $result = self::insertBetDetailWin($bdBig,Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['4D_BIG_CONSOLATION'],
+                                $package,$user,$bd->id);
+                            $totalWin += $result["winAmount"];
+                            $totalSuperiorBonus += $result["superiorBonus"];
+                        }
+                        if ($bdNumber == $cd->{'consolation9Prize'}) {
+                            $result = self::insertBetDetailWin($bdBig,Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['4D_BIG_CONSOLATION'],
+                                $package,$user,$bd->id);
+                            $totalWin += $result["winAmount"];
+                            $totalSuperiorBonus += $result["superiorBonus"];
+                        }
+                        if ($bdNumber == $cd->{'consolation10Prize'}) {
                             $result = self::insertBetDetailWin($bdBig,Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['4D_BIG_CONSOLATION'],
                                 $package,$user,$bd->id);
                             $totalWin += $result["winAmount"];
                             $totalSuperiorBonus += $result["superiorBonus"];
                         }
                     }
+                    
                     if (!empty($bdSmall) && $bdSmall > 0) {
                         if ($bdNumber == $cd->{'1stPrize'}) {
                             $result = self::insertBetDetailWin($bdSmall,Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['4D_SMALL_PRIZE_1'],
@@ -1202,6 +1305,7 @@ class BetController extends Controller
                             $totalSuperiorBonus += $result["superiorBonus"];
                         }
                     }
+
                     if (!empty($bd4a) && $bd4a > 0) { //1st prize only
                         if ($bdNumber == $cd->{'1stPrize'}) {
                             $result = self::insertBetDetailWin($bd4a,Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['4D_4A_PRIZE'],
@@ -1226,28 +1330,133 @@ class BetController extends Controller
                             $totalSuperiorBonus += $result["superiorBonus"];
                         }
                     }
+
                     if (!empty($bd4d) && $bd4d > 0) { //Special only
-                        if ($bdNumber == $cd->{'special1Prize'} || $bdNumber == $cd->{'special2Prize'} || $bdNumber == $cd->{'special3Prize'}
-                        || $bdNumber == $cd->{'special4Prize'} || $bdNumber == $cd->{'special5Prize'} || $bdNumber == $cd->{'special6Prize'}
-                        || $bdNumber == $cd->{'special7Prize'} || $bdNumber == $cd->{'special8Prize'} || $bdNumber == $cd->{'special9Prize'}
-                        || $bdNumber == $cd->{'special10Prize'}) {
+                        if ($bdNumber == $cd->{'special1Prize'}) {
+                            $result = self::insertBetDetailWin($bd4d,Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['4D_4D_PRIZE'],
+                                $package,$user,$bd->id);
+                            $totalWin += $result["winAmount"];
+                            $totalSuperiorBonus += $result["superiorBonus"];
+                        }
+                        if ($bdNumber == $cd->{'special2Prize'}) {
+                            $result = self::insertBetDetailWin($bd4d,Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['4D_4D_PRIZE'],
+                                $package,$user,$bd->id);
+                            $totalWin += $result["winAmount"];
+                            $totalSuperiorBonus += $result["superiorBonus"];
+                        }
+                        if ($bdNumber == $cd->{'special3Prize'}) {
+                            $result = self::insertBetDetailWin($bd4d,Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['4D_4D_PRIZE'],
+                                $package,$user,$bd->id);
+                            $totalWin += $result["winAmount"];
+                            $totalSuperiorBonus += $result["superiorBonus"];
+                        }
+                        if ($bdNumber == $cd->{'special4Prize'}) {
+                            $result = self::insertBetDetailWin($bd4d,Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['4D_4D_PRIZE'],
+                                $package,$user,$bd->id);
+                            $totalWin += $result["winAmount"];
+                            $totalSuperiorBonus += $result["superiorBonus"];
+                        }
+                        if ($bdNumber == $cd->{'special5Prize'}) {
+                            $result = self::insertBetDetailWin($bd4d,Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['4D_4D_PRIZE'],
+                                $package,$user,$bd->id);
+                            $totalWin += $result["winAmount"];
+                            $totalSuperiorBonus += $result["superiorBonus"];
+                        }
+                        if ($bdNumber == $cd->{'special6Prize'}) {
+                            $result = self::insertBetDetailWin($bd4d,Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['4D_4D_PRIZE'],
+                                $package,$user,$bd->id);
+                            $totalWin += $result["winAmount"];
+                            $totalSuperiorBonus += $result["superiorBonus"];
+                        }
+                        if ($bdNumber == $cd->{'special7Prize'}) {
+                            $result = self::insertBetDetailWin($bd4d,Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['4D_4D_PRIZE'],
+                                $package,$user,$bd->id);
+                            $totalWin += $result["winAmount"];
+                            $totalSuperiorBonus += $result["superiorBonus"];
+                        }
+                        if ($bdNumber == $cd->{'special8Prize'}) {
+                            $result = self::insertBetDetailWin($bd4d,Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['4D_4D_PRIZE'],
+                                $package,$user,$bd->id);
+                            $totalWin += $result["winAmount"];
+                            $totalSuperiorBonus += $result["superiorBonus"];
+                        }
+                        if ($bdNumber == $cd->{'special9Prize'}) {
+                            $result = self::insertBetDetailWin($bd4d,Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['4D_4D_PRIZE'],
+                                $package,$user,$bd->id);
+                            $totalWin += $result["winAmount"];
+                            $totalSuperiorBonus += $result["superiorBonus"];
+                        }
+                        if ($bdNumber == $cd->{'special10Prize'}) {
                             $result = self::insertBetDetailWin($bd4d,Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['4D_4D_PRIZE'],
                                 $package,$user,$bd->id);
                             $totalWin += $result["winAmount"];
                             $totalSuperiorBonus += $result["superiorBonus"];
                         }
                     }
+
                     if (!empty($bd4e) && $bd4e > 0) { //Consolation only
-                        if ($bdNumber == $cd->{'consolation1Prize'} || $bdNumber == $cd->{'consolation2Prize'} || $bdNumber == $cd->{'consolation3Prize'}
-                            || $bdNumber == $cd->{'consolation4Prize'} || $bdNumber == $cd->{'consolation5Prize'} || $bdNumber == $cd->{'consolation6Prize'}
-                            || $bdNumber == $cd->{'consolation7Prize'} || $bdNumber == $cd->{'consolation8Prize'} || $bdNumber == $cd->{'consolation9Prize'}
-                            || $bdNumber == $cd->{'consolation10Prize'}) {
+                        if ($bdNumber == $cd->{'consolation1Prize'}) {
+                            $result = self::insertBetDetailWin($bd4e,Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['4D_4E_PRIZE'],
+                                $package,$user,$bd->id);
+                            $totalWin += $result["winAmount"];
+                            $totalSuperiorBonus += $result["superiorBonus"];
+                        }
+                        if ($bdNumber == $cd->{'consolation2Prize'}) {
+                            $result = self::insertBetDetailWin($bd4e,Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['4D_4E_PRIZE'],
+                                $package,$user,$bd->id);
+                            $totalWin += $result["winAmount"];
+                            $totalSuperiorBonus += $result["superiorBonus"];
+                        }
+                        if ($bdNumber == $cd->{'consolation3Prize'}) {
+                            $result = self::insertBetDetailWin($bd4e,Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['4D_4E_PRIZE'],
+                                $package,$user,$bd->id);
+                            $totalWin += $result["winAmount"];
+                            $totalSuperiorBonus += $result["superiorBonus"];
+                        }
+                        if ($bdNumber == $cd->{'consolation4Prize'}) {
+                            $result = self::insertBetDetailWin($bd4e,Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['4D_4E_PRIZE'],
+                                $package,$user,$bd->id);
+                            $totalWin += $result["winAmount"];
+                            $totalSuperiorBonus += $result["superiorBonus"];
+                        }
+                        if ($bdNumber == $cd->{'consolation5Prize'}) {
+                            $result = self::insertBetDetailWin($bd4e,Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['4D_4E_PRIZE'],
+                                $package,$user,$bd->id);
+                            $totalWin += $result["winAmount"];
+                            $totalSuperiorBonus += $result["superiorBonus"];
+                        }
+                        if ($bdNumber == $cd->{'consolation6Prize'}) {
+                            $result = self::insertBetDetailWin($bd4e,Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['4D_4E_PRIZE'],
+                                $package,$user,$bd->id);
+                            $totalWin += $result["winAmount"];
+                            $totalSuperiorBonus += $result["superiorBonus"];
+                        }
+                        if ($bdNumber == $cd->{'consolation7Prize'}) {
+                            $result = self::insertBetDetailWin($bd4e,Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['4D_4E_PRIZE'],
+                                $package,$user,$bd->id);
+                            $totalWin += $result["winAmount"];
+                            $totalSuperiorBonus += $result["superiorBonus"];
+                        }
+                        if ($bdNumber == $cd->{'consolation8Prize'}) {
+                            $result = self::insertBetDetailWin($bd4e,Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['4D_4E_PRIZE'],
+                                $package,$user,$bd->id);
+                            $totalWin += $result["winAmount"];
+                            $totalSuperiorBonus += $result["superiorBonus"];
+                        }
+                        if ($bdNumber == $cd->{'consolation9Prize'}) {
+                            $result = self::insertBetDetailWin($bd4e,Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['4D_4E_PRIZE'],
+                                $package,$user,$bd->id);
+                            $totalWin += $result["winAmount"];
+                            $totalSuperiorBonus += $result["superiorBonus"];
+                        }
+                        if ($bdNumber == $cd->{'consolation10Prize'}) {
                             $result = self::insertBetDetailWin($bd4e,Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['4D_4E_PRIZE'],
                                 $package,$user,$bd->id);
                             $totalWin += $result["winAmount"];
                             $totalSuperiorBonus += $result["superiorBonus"];
                         }
                     }
+
                     if (!empty($bd4f) && $bd4f > 0) { //1st, 2nd and 3rd prize
                         if ($bdNumber == $cd->{'1stPrize'} || $bdNumber == $cd->{'2ndPrize'} || $bdNumber == $cd->{'3rdPrize'}) {
                             $result = self::insertBetDetailWin($bd4f,Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['4D_4F_PRIZE'],
@@ -1256,6 +1465,7 @@ class BetController extends Controller
                             $totalSuperiorBonus += $result["superiorBonus"];
                         }
                     }
+
                     if (!empty($bd3abc) && $bd3abc > 0) { //1st, 2nd and 3rd prize (last 3 digits)
                         if (substr($bdNumber,-3) == substr($cd->{'1stPrize'},-3)) {
                             $result = self::insertBetDetailWin($bd3abc,Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['3D_ABC_PRIZE_1'],
@@ -1276,6 +1486,7 @@ class BetController extends Controller
                             $totalSuperiorBonus += $result["superiorBonus"];
                         }
                     }
+
                     if (!empty($bd3a) && $bd3a > 0) { //1st prize only (last 3 digits)
                         if (substr($bdNumber,-3) == substr($cd->{'1stPrize'},-3)) {
                             $result = self::insertBetDetailWin($bd3a,Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['3D_3A_PRIZE'],
@@ -1300,24 +1511,126 @@ class BetController extends Controller
                             $totalSuperiorBonus += $result["superiorBonus"];
                         }
                     }
+
                     if (!empty($bd3d) && $bd3d > 0) { //Special only (last 3 digits)
-                        if (substr($bdNumber,-3) == substr($cd->{'special1Prize'},-3) || substr($bdNumber,-3) == substr($cd->{'special2Prize'},-3)
-                            || substr($bdNumber,-3) == substr($cd->{'special3Prize'},-3) || substr($bdNumber,-3) == substr($cd->{'special4Prize'},-3)
-                            || substr($bdNumber,-3) == substr($cd->{'special5Prize'},-3) || substr($bdNumber,-3) == substr($cd->{'special6Prize'},-3)
-                            || substr($bdNumber,-3) == substr($cd->{'special7Prize'},-3) || substr($bdNumber,-3) == substr($cd->{'special8Prize'},-3)
-                            || substr($bdNumber,-3) == substr($cd->{'special9Prize'},-3) || substr($bdNumber,-3) == substr($cd->{'special10Prize'},-3)) {
+                        if (substr($bdNumber,-3) == substr($cd->{'special1Prize'},-3)) {
+                            $result = self::insertBetDetailWin($bd3d,Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['3D_3D_PRIZE'],
+                                $package,$user,$bd->id);
+                            $totalWin += $result["winAmount"];
+                            $totalSuperiorBonus += $result["superiorBonus"];
+                        }
+                        if (substr($bdNumber,-3) == substr($cd->{'special2Prize'},-3)) {
+                            $result = self::insertBetDetailWin($bd3d,Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['3D_3D_PRIZE'],
+                                $package,$user,$bd->id);
+                            $totalWin += $result["winAmount"];
+                            $totalSuperiorBonus += $result["superiorBonus"];
+                        }
+                        if (substr($bdNumber,-3) == substr($cd->{'special3Prize'},-3)) {
+                            $result = self::insertBetDetailWin($bd3d,Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['3D_3D_PRIZE'],
+                                $package,$user,$bd->id);
+                            $totalWin += $result["winAmount"];
+                            $totalSuperiorBonus += $result["superiorBonus"];
+                        }
+                        if (substr($bdNumber,-3) == substr($cd->{'special4Prize'},-3)) {
+                            $result = self::insertBetDetailWin($bd3d,Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['3D_3D_PRIZE'],
+                                $package,$user,$bd->id);
+                            $totalWin += $result["winAmount"];
+                            $totalSuperiorBonus += $result["superiorBonus"];
+                        }
+                        if (substr($bdNumber,-3) == substr($cd->{'special5Prize'},-3)) {
+                            $result = self::insertBetDetailWin($bd3d,Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['3D_3D_PRIZE'],
+                                $package,$user,$bd->id);
+                            $totalWin += $result["winAmount"];
+                            $totalSuperiorBonus += $result["superiorBonus"];
+                        }
+                        if (substr($bdNumber,-3) == substr($cd->{'special6Prize'},-3)) {
+                            $result = self::insertBetDetailWin($bd3d,Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['3D_3D_PRIZE'],
+                                $package,$user,$bd->id);
+                            $totalWin += $result["winAmount"];
+                            $totalSuperiorBonus += $result["superiorBonus"];
+                        }
+                        if (substr($bdNumber,-3) == substr($cd->{'special7Prize'},-3)) {
+                            $result = self::insertBetDetailWin($bd3d,Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['3D_3D_PRIZE'],
+                                $package,$user,$bd->id);
+                            $totalWin += $result["winAmount"];
+                            $totalSuperiorBonus += $result["superiorBonus"];
+                        }
+                        if (substr($bdNumber,-3) == substr($cd->{'special8Prize'},-3)) {
+                            $result = self::insertBetDetailWin($bd3d,Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['3D_3D_PRIZE'],
+                                $package,$user,$bd->id);
+                            $totalWin += $result["winAmount"];
+                            $totalSuperiorBonus += $result["superiorBonus"];
+                        }
+                        if (substr($bdNumber,-3) == substr($cd->{'special9Prize'},-3)) {
+                            $result = self::insertBetDetailWin($bd3d,Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['3D_3D_PRIZE'],
+                                $package,$user,$bd->id);
+                            $totalWin += $result["winAmount"];
+                            $totalSuperiorBonus += $result["superiorBonus"];
+                        }
+                        if (substr($bdNumber,-3) == substr($cd->{'special10Prize'},-3)) {
                             $result = self::insertBetDetailWin($bd3d,Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['3D_3D_PRIZE'],
                                 $package,$user,$bd->id);
                             $totalWin += $result["winAmount"];
                             $totalSuperiorBonus += $result["superiorBonus"];
                         }
                     }
+
                     if (!empty($bd3e) && $bd3e > 0) { //Consolation only (last 3 digits)
-                        if (substr($bdNumber,-3) == substr($cd->{'consolation1Prize'},-3) || substr($bdNumber,-3) == substr($cd->{'consolation2Prize'},-3)
-                            || substr($bdNumber,-3) == substr($cd->{'consolation3Prize'},-3) || substr($bdNumber,-3) == substr($cd->{'consolation4Prize'},-3)
-                            || substr($bdNumber,-3) == substr($cd->{'consolation5Prize'},-3) || substr($bdNumber,-3) == substr($cd->{'consolation6Prize'},-3)
-                            || substr($bdNumber,-3) == substr($cd->{'consolation7Prize'},-3) || substr($bdNumber,-3) == substr($cd->{'consolation8Prize'},-3)
-                            || substr($bdNumber,-3) == substr($cd->{'consolation9Prize'},-3) || substr($bdNumber,-3) == substr($cd->{'consolation10Prize'},-3)) {
+                        if (substr($bdNumber,-3) == substr($cd->{'consolation1Prize'},-3)) {
+                            $result = self::insertBetDetailWin($bd3e,Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['3D_3E_PRIZE'],
+                                $package,$user,$bd->id);
+                            $totalWin += $result["winAmount"];
+                            $totalSuperiorBonus += $result["superiorBonus"];
+                        }
+                        if (substr($bdNumber,-3) == substr($cd->{'consolation2Prize'},-3)) {
+                            $result = self::insertBetDetailWin($bd3e,Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['3D_3E_PRIZE'],
+                                $package,$user,$bd->id);
+                            $totalWin += $result["winAmount"];
+                            $totalSuperiorBonus += $result["superiorBonus"];
+                        }
+                        if (substr($bdNumber,-3) == substr($cd->{'consolation3Prize'},-3)) {
+                            $result = self::insertBetDetailWin($bd3e,Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['3D_3E_PRIZE'],
+                                $package,$user,$bd->id);
+                            $totalWin += $result["winAmount"];
+                            $totalSuperiorBonus += $result["superiorBonus"];
+                        }
+                        if (substr($bdNumber,-3) == substr($cd->{'consolation4Prize'},-3)) {
+                            $result = self::insertBetDetailWin($bd3e,Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['3D_3E_PRIZE'],
+                                $package,$user,$bd->id);
+                            $totalWin += $result["winAmount"];
+                            $totalSuperiorBonus += $result["superiorBonus"];
+                        }
+                        if (substr($bdNumber,-3) == substr($cd->{'consolation5Prize'},-3)) {
+                            $result = self::insertBetDetailWin($bd3e,Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['3D_3E_PRIZE'],
+                                $package,$user,$bd->id);
+                            $totalWin += $result["winAmount"];
+                            $totalSuperiorBonus += $result["superiorBonus"];
+                        }
+                        if (substr($bdNumber,-3) == substr($cd->{'consolation6Prize'},-3)) {
+                            $result = self::insertBetDetailWin($bd3e,Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['3D_3E_PRIZE'],
+                                $package,$user,$bd->id);
+                            $totalWin += $result["winAmount"];
+                            $totalSuperiorBonus += $result["superiorBonus"];
+                        }
+                        if (substr($bdNumber,-3) == substr($cd->{'consolation7Prize'},-3)) {
+                            $result = self::insertBetDetailWin($bd3e,Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['3D_3E_PRIZE'],
+                                $package,$user,$bd->id);
+                            $totalWin += $result["winAmount"];
+                            $totalSuperiorBonus += $result["superiorBonus"];
+                        }
+                        if (substr($bdNumber,-3) == substr($cd->{'consolation8Prize'},-3)) {
+                            $result = self::insertBetDetailWin($bd3e,Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['3D_3E_PRIZE'],
+                                $package,$user,$bd->id);
+                            $totalWin += $result["winAmount"];
+                            $totalSuperiorBonus += $result["superiorBonus"];
+                        }
+                        if (substr($bdNumber,-3) == substr($cd->{'consolation9Prize'},-3)) {
+                            $result = self::insertBetDetailWin($bd3e,Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['3D_3E_PRIZE'],
+                                $package,$user,$bd->id);
+                            $totalWin += $result["winAmount"];
+                            $totalSuperiorBonus += $result["superiorBonus"];
+                        }
+                        if (substr($bdNumber,-3) == substr($cd->{'consolation10Prize'},-3)) {
                             $result = self::insertBetDetailWin($bd3e,Yii::$app->params['BET']['DETAIL']['WIN_PRIZE_TYPE']['3D_3E_PRIZE'],
                                 $package,$user,$bd->id);
                             $totalWin += $result["winAmount"];
